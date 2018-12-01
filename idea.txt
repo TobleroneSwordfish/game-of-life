@@ -1,0 +1,2 @@
+so we do the bit packing.
+we pass each thread an array of arrays of int32s, representing the three lines it needs

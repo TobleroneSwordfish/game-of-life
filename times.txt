@@ -1,0 +1,12 @@
+Naive with prints on every step
+16x16 5 rounds: 7.867353, 7.772058, 7.729994
+10 rounds: 15.475379, 15.619975, 15.525859
+No prints 10 rounds: 0.327480, 0.327423, 0.328089
+
+Huh, so prints are quite the overhead eh?
+
+Okay, prints are satan.
+
+
+20 rounds of 64 = 0.926022
+
