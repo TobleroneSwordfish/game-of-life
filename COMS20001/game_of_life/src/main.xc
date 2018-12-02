@@ -39,14 +39,38 @@ on tile[0] : out port leds = XS1_PORT_4F;
 #define FXOS8700EQ_OUT_Z_MSB 0x5
 #define FXOS8700EQ_OUT_Z_LSB 0x6
 
-void buttonListener(in port b, chanend c_out) {
+void buttonListener(in port b, chanend c_out, chanend c_stop) {
   int r;
   while (1) {
     b when pinseq(15)  :> r;    // check that no button is pressed
     b when pinsneq(15) :> r;    // check if some buttons are pressed
-    if ((r==13) || (r==14))     // if either button is pressed
-    c_out <: r;             // send button pattern to userAnt
+    if (r==14)
+    {
+        c_out <: r;             // send button pattern to distributor
+    }
+    else if (r==13)
+    {
+        //printf("button 13 pushed\n");
+        c_stop <: (uchar)1;
+    }
   }
+}
+
+void stopController(chanend c_stopButtons, chanend c_stop)
+{
+    uchar stop = 0;
+    while (!stop)
+    {
+        select
+        {
+            case c_stopButtons :> uchar x:
+                stop = x;
+                break;
+            case c_stop :> uchar x:
+                c_stop <: stop;
+                break;
+        }
+    }
 }
 
 void LEDController(chanend c_in)
@@ -114,6 +138,14 @@ double timeInSeconds(uint32_t counter, uint32_t timerValue, uint32_t interval)
 {
     return (counter * ((double)interval / (double)100000000)) + timerValue / (double)100000000;
 }
+int getPreviousWorker(int w)
+{
+    return w - 1 + (w == 0) * WORKERS;
+}
+int getNextWorker(int w)
+{
+    return w + 1 - (w == WORKERS -1) * WORKERS;
+}
 /////////////////////////////////////////////////////////////////////////////////////////
 //
 // Start your implementation by changing this function to implement the game of life
@@ -121,7 +153,7 @@ double timeInSeconds(uint32_t counter, uint32_t timerValue, uint32_t interval)
 // Currently the function just inverts the image
 //
 /////////////////////////////////////////////////////////////////////////////////////////
-void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend c_timer, chanend wcs[WORKERS], chanend c_leds)
+void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend c_timer, chanend wcs[WORKERS], chanend c_leds, chanend c_buttons, chanend c_stop)
 {
   //Starting up and wait for tilting of the xCore-200 Explorer
   printf( "ProcessImage: Start, size = %dx%d\n", IMHT, IMWD );
@@ -130,8 +162,8 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend c_timer, 
   int r = 0;
   while (r != 14)
   {
-      buttons when pinsneq(15) :> r;
-      printf("%i\n", r);
+      c_buttons :> r;
+      //printf("%i\n", r);
   }
 
   //Read in and do something with your image values.
@@ -188,39 +220,54 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend c_timer, 
       }
   }
 
+  uchar stop = 0;
   //do not delete ιθθρ!
   //main processing ιθθρ
-  while (1)
+  while (!stop)
   {
       //toggle status LED
       c_leds <: 1;
+      int workersReplied = 0;
+      //first row received is stored at w, second row at w * 2
+      uint32_t edgeRows[WORKERS * 2][rowLength];
+      while (workersReplied < WORKERS)
+      {
+          select
+          {
+              case wcs[int w] :> uint32_t x:
+                  printf("Worker %i replied to distributer\n", w);
+                  workersReplied++;
+                  edgeRows[w][0] = x;
+                  for (int i = 1; i < rowLength; i++)
+                  {
+                      wcs[w] :> edgeRows[w][i];
+                  }
+                  for (int i = 0; i < rowLength; i++)
+                  {
+                      wcs[w] :> edgeRows[w * 2][i];
+                  }
+                  break;
+          }
+      }
+      printf("All workers replied to distributer\n");
+
       for (int w = 0; w < WORKERS; w++)
       {
-          //allow for wrap
-          unsigned char prevWorker = w - 1 + (w == 0) * WORKERS;
-          unsigned char nextWorker = w + 1 - (w == WORKERS -1) * WORKERS;
-          //transfer first and last rows to the next workers along
-          uint32_t temp;
           for (int i = 0; i < rowLength; i++)
           {
-              wcs[w] :> temp;
-              wcs[prevWorker] <: temp;
+              wcs[w] <: edgeRows[getPreviousWorker(w) * 2][i];
           }
           for (int i = 0; i < rowLength; i++)
           {
-              wcs[i] :> temp;
-              wcs[nextWorker] <: temp;
+              wcs[w] <: edgeRows[getNextWorker(w)][i];
           }
       }
-      select
-      {
-          case wcs[w] :> uint32_t x:
-              for (int i = 0; i < rowLength; i++)
-              {
-
-              }
-      }
+      printf("All workers have been sent their shit\n");
+      c_stop <: (uchar)1;
+      c_stop :> stop;
   }
+
+
 
 //  int maxrounds = 20;
 //  for (int rounds = 0; rounds < maxrounds; rounds++)
@@ -326,11 +373,19 @@ void Worker(chanend channel)
     {
         for (int i = 0; i < rowLength; i++)
         {
-            channel <: rows[0][i];
+            channel <: rows[1][i];
         }
         for (int i = 0; i < rowLength; i++)
         {
-            channel <: rows[IMWD/WORKERS + 2 - 1][i];
+            channel <: rows[IMWD/WORKERS][i];
+        }
+        for (int i=0; i<rowLength; i++)
+        {
+            channel :> rows[0][i];
+        }
+        for (int i=0; i<rowLength; i++)
+        {
+            channel :> rows[IMWD/WORKERS+1][i];
         }
     }
 }
@@ -450,16 +505,18 @@ int main(void) {
 
 i2c_master_if i2c[1];               //interface to orientation
 
-chan c_inIO, c_outIO, c_control, c_timer, c_leds;    //extend your channel definitions here
+chan c_inIO, c_outIO, c_control, c_timer, c_leds, c_buttons, c_stop, c_stopLink;    //extend your channel definitions here
 chan workerChans[WORKERS];
 par {
     on tile[0]: i2c_master(i2c, 1, p_scl, p_sda, 10);   //server thread providing orientation data
     on tile[0]: orientation(i2c[0],c_control);        //client thread reading orientation data
     on tile[0]: DataInStream(c_inIO);          //thread to read in a PGM image
     on tile[0]: DataOutStream(c_outIO);       //thread to write out a PGM image
-    on tile[0]: distributor(c_inIO, c_outIO, c_control, c_timer, workerChans, c_leds);//thread to coordinate work on image
+    on tile[0]: distributor(c_inIO, c_outIO, c_control, c_timer, workerChans, c_leds, c_buttons, c_stop);//thread to coordinate work on image
     on tile[0]: Timer(c_timer); //timer thread to keep track of a sensible real world time
     on tile[0]: LEDController(c_leds);
+    on tile[0]: buttonListener(buttons, c_buttons, c_stopLink);
+    on tile[0]: stopController(c_stopLink, c_stop);
     par (int i = 0; i < WORKERS; i++)
     {
         on tile[1]: Worker(workerChans[i]);
