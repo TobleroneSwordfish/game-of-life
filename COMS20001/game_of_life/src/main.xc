@@ -8,11 +8,11 @@
 #include "pgmIO.h"
 #include "i2c.h"
 
-#define  IMHT 67                  //image height
-#define  IMWD 67                  //image width
+#define  IMHT 64                  //image height
+#define  IMWD 64                  //image width
 #define rowLength (IMWD/32) + (IMWD % 32 != 0)
 #define WORKERS 8
-#define infname "one.pgm"     //put your input image path here
+#define infname "64x64.pgm"     //put your input image path here
 #define outfname "testout.pgm" //put your output image path here
 
 typedef unsigned char uchar;      //using uchar as shorthand
@@ -56,6 +56,7 @@ void buttonListener(in port b, chanend c_out, chanend c_writeButtons) {
   }
 }
 
+//controller to decide whether the game should be paused currently
 [[combinable]]
 void pauseController(chanend c_writeButtons, chanend c_accel, chanend c_pause)
 {
@@ -64,10 +65,12 @@ void pauseController(chanend c_writeButtons, chanend c_accel, chanend c_pause)
     {
         select
         {
+            //button SW2 pushed
             case c_writeButtons :> pause:
                 break;
+            //board tilt value changed
             case c_accel :> uchar accelVal:
-                printf("Received accelVal of %u\n", accelVal);
+                //printf("Received accelVal of %u\n", accelVal);
                 if (accelVal == 1)
                 {
                     pause = 2;
@@ -76,8 +79,9 @@ void pauseController(chanend c_writeButtons, chanend c_accel, chanend c_pause)
                 {
                     pause = 0;
                 }
-                printf("pauseController pause value: %u\n", pause);
+                //printf("pauseController pause value: %u\n", pause);
                 break;
+            //another thread requested a pause value
             case c_pause :> uchar x:
                 c_pause <: pause;
                 if (pause == 1)
@@ -89,6 +93,7 @@ void pauseController(chanend c_writeButtons, chanend c_accel, chanend c_pause)
     }
 }
 
+//just allows for LED toggling
 [[combinable]]
 void LEDController(chanend c_in)
 {
@@ -151,6 +156,7 @@ unsigned char checkAlive(int x, int y, unsigned char grid[IMHT][IMWD])
         return 0;
     }
 }
+
 //nicked from https://stackoverflow.com/questions/29787310/does-pow-work-for-int-data-type-in-c as pow() seems to bork pretty hard for ints
 int int_pow(int base, int exp)
 {
@@ -164,6 +170,7 @@ int int_pow(int base, int exp)
     }
     return result;
 }
+//takes the timer values and interval the timer is running on and returns the most accurate approximation in seconds
 double timeInSeconds(uint32_t counter, uint32_t timerValue, uint32_t interval)
 {
     return (counter * ((double)interval / (double)100000000)) + timerValue / (double)100000000;
@@ -175,6 +182,15 @@ int getPreviousWorker(int w)
 int getNextWorker(int w)
 {
     return w + 1 - (w == WORKERS -1) * WORKERS;
+}
+
+//returns the number of bits that should be read from the next integer at position n
+int getIntSize(int n)
+{
+    if (IMWD-n*32>32){
+        return 32;
+    }
+    else return IMWD-n*32; //what does this even do?
 }
 /////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -282,6 +298,7 @@ void distributor(chanend c_in, chanend c_out, chanend c_timer, chanend wcs[WORKE
       workersReplied = 0;
       //printf("All workers replied to distributer\n");
 
+      //send the edges back to the other workers
       for (int w = 0; w < WORKERS; w++)
       {
           for (int i = 0; i < rowLength; i++)
@@ -294,7 +311,9 @@ void distributor(chanend c_in, chanend c_out, chanend c_timer, chanend wcs[WORKE
           }
       }
       //printf("All workers have been sent their shit\n");
-      printf("Round complete\n");
+      //printf("Round complete\n");
+
+      //check if execution should pause
       c_pause <: (uchar)37;
       uchar pause;
       c_pause :> pause;
@@ -304,8 +323,12 @@ void distributor(chanend c_in, chanend c_out, chanend c_timer, chanend wcs[WORKE
       }
       if (pause != 0)
       {
+          uchar oldPause = pause;
+          //turn off processing LED
+          c_leds <: (uchar)1;
           if (pause == 1)
           {
+              c_leds <: (uchar)2;
               for (int w = 0; w < WORKERS; w++)
               {
                   int rows = IMHT/WORKERS;
@@ -316,11 +339,7 @@ void distributor(chanend c_in, chanend c_out, chanend c_timer, chanend wcs[WORKE
                           uint32_t x;
                           wcs[w] :> x;
                           //printf("Distributor received: %u\n", x);
-                          uchar ffs;//code
-                          if (IMWD-n*32>32){
-                              ffs=32;
-                          }
-                          else ffs=IMWD-n*32;
+                          uchar ffs = getIntSize(n);
                           for (int i = 0; i < ffs; i++)
                           {
                               //printf("divisor = %i\n", divisor);
@@ -343,16 +362,34 @@ void distributor(chanend c_in, chanend c_out, chanend c_timer, chanend wcs[WORKE
           {
               printf("Board is now TILTED\n");
               c_leds <: (uchar)8;
+              int aliveCount = 0;
+              int x;
+              for (int w = 0; w < WORKERS; w++)
+              {
+                  wcs[w] :> x;
+                  aliveCount += x;
+              }
+              printf("Number of alive cells %i\n", aliveCount);
           }
-          while(pause != 0);
+          //wait for either board to not be tilted or button not be pressed
+          while(pause != 0)
           {
-              c_pause <: (uchar)1;
+              //printf("waiting for lack of tilt\n");
+              c_pause <: (uchar)37;
               c_pause :> pause;
-              printf("Pause value is currently %u, waiting for pause to be 0\n", pause);
+              delay_milliseconds(100);
           }
-          printf("Board no longer TILTED\n");
-
+          //toggle the red LED off
+          if (oldPause == 1)
+          {
+              c_leds <: (uchar)2;
+          }
+          else if (oldPause == 2)
+          {
+              c_leds <: (uchar)8;
+          }
       }
+      c_leds <: (uchar)1;
   }
 
 
@@ -467,7 +504,7 @@ void Worker(chanend channel)
     //i don't know, he's not telling me
     // "add the fucking shit"
     //okay
-    //loop brother
+    //ιθθρ brother
     //uchar stop = 0;
     while (1)
     {
@@ -489,9 +526,9 @@ void Worker(chanend channel)
         {
             channel :> rows[IMWD/WORKERS+1][i];
         }
-        uchar stop;
-        channel :> stop;
-        if (stop)
+        uchar pause;
+        channel :> pause;
+        if (pause == 1)
         {
             for (int r = 1; r < IMWD/WORKERS + 1; r++)
             {
@@ -500,6 +537,25 @@ void Worker(chanend channel)
                     channel <: rows[r][n];
                 }
             }
+        }
+        else if (pause == 2)
+        {
+            int count = 0;
+            for (int r = 1; r < IMWD/WORKERS + 1; r++)
+            {
+                for (int n = 0; n < rowLength; n++)
+                {
+                    uint32_t x = rows[r][n];
+                    for (int i = 0; i < getIntSize(n); i++)
+                    {
+                        if (x % 2)
+                        {
+                            count++;
+                        }
+                    }
+                }
+            }
+            channel <: count;
         }
     }
 }
@@ -511,30 +567,36 @@ void Worker(chanend channel)
 /////////////////////////////////////////////////////////////////////////////////////////
 void DataOutStream(chanend c_in)
 {
-  int res;
-  uchar line[ IMWD ];
+  int generation = 0;
+  while (1)
+  {
+      int res;
+        uchar line[ IMWD ];
 
-  //Open PGM file
-  printf( "DataOutStream: Start...\n" );
-  res = _openoutpgm( outfname, IMWD, IMHT );
-  if( res ) {
-    printf( "DataOutStream: Error opening %s\n.", outfname );
-    return;
+        //Open PGM file
+        printf( "DataOutStream: Start...\n" );
+        char filename[20];
+        sprintf(filename, "testout%i.pgm", generation);
+        res = _openoutpgm(filename, IMWD, IMHT );
+        if( res ) {
+          printf( "DataOutStream: Error opening %s\n.", outfname );
+          return;
+        }
+
+        //Compile each line of the image and write the image line-by-line
+        for( int y = 0; y < IMHT; y++ ) {
+          for( int x = 0; x < IMWD; x++ ) {
+            c_in :> line[ x ];
+          }
+          _writeoutline( line, IMWD );
+          printf( "DataOutStream: Line written...\n" );
+        }
+
+        //Close the PGM image
+        _closeoutpgm();
+        printf( "DataOutStream: Done...\n" );
+        generation++;
   }
-
-  //Compile each line of the image and write the image line-by-line
-  for( int y = 0; y < IMHT; y++ ) {
-    for( int x = 0; x < IMWD; x++ ) {
-      c_in :> line[ x ];
-    }
-    _writeoutline( line, IMWD );
-    printf( "DataOutStream: Line written...\n" );
-  }
-
-  //Close the PGM image
-  _closeoutpgm();
-  printf( "DataOutStream: Done...\n" );
-  return;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -637,8 +699,7 @@ par {
     on tile[0].core[0]: LEDController(c_leds);
     on tile[0]: i2c_master(i2c, 1, p_scl, p_sda, 10);   //server thread providing orientation data
     on tile[0]: orientation(i2c[0], c_accel);        //client thread reading orientation data
-    on tile[0]: DataInStream(c_inIO);          //thread to read in a PGM image
-    on tile[0]: DataOutStream(c_outIO);       //thread to write out a PGM image
+    on tile[0]: {DataInStream(c_inIO); DataOutStream(c_outIO);}
     on tile[0]: distributor(c_inIO, c_outIO, c_timer, workerChans, c_leds, c_buttons, c_stop);//thread to coordinate work on image
     on tile[0]: buttonListener(buttons, c_buttons, c_pauseLink);
     on tile[0]: pauseController(c_pauseLink, c_accel, c_stop);
