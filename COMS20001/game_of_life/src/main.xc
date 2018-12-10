@@ -1,4 +1,4 @@
-// COMS20001 - Cellular Automaton Farm - Initial Code Skeleton
+// COMS20001 - Cellular Automaton Farm - Initial Code Skeleton #CRI
 // (using the XMOS i2c accelerometer demo code)
 
 #include <platform.h>
@@ -8,14 +8,17 @@
 #include "pgmIO.h"
 #include "i2c.h"
 
-#define  IMHT 64                  //image height
-#define  IMWD 64                  //image width
-#define GENERATE 0 //should the grid be generated or read in
+#define  IMHT 512                  //image height
+#define  IMWD 512                  //image width
+#define GENERATE 1 //should the grid be generated or read in
 #define ROW_LENGTH (IMWD/32) + (IMWD % 32 != 0)
 #define WORKERS 8
 #define MAXROUNDS 100
-#define infname "64x64.pgm"     //put your input image path here
+#define infname "64test.pgm"     //put your input image path here
 #define outfname "testout.pgm" //put your output image path here
+#define ROUNDOUT -1
+#define ALIVERATIO 0.0
+#define LOWRANDBOUND RAND_MAX*ALIVERATIO
 
 typedef unsigned char uchar;      //using uchar as shorthand
 
@@ -146,24 +149,12 @@ void DataInStream(chanend c_out)
 #define alive (uchar)255
 #define ded (uchar)0
 
+//TODO replace with macro or inline, not sure if inline is the same speed
 uint32_t addBitAtIndex(uint32_t num, unsigned int index)
 {
     return num | ((uint32_t)1 << index);
 }
 
-////nicked from https://stackoverflow.com/questions/29787310/does-pow-work-for-int-data-type-in-c as pow() seems to bork pretty hard for ints
-//uint32_t int_pow(uint32_t base, uint32_t exp)
-//{
-//    uint32_t result = 1;
-//    while (exp)
-//    {
-//        if (exp & 1)
-//           result *= base;
-//        exp /= 2;
-//        base *= base;
-//    }
-//    return result;
-//}
 //takes the timer values and interval the timer is running on and returns the most accurate approximation in seconds
 double timeInSeconds(uint32_t counter, uint32_t timerValue, uint32_t interval)
 {
@@ -195,18 +186,14 @@ void readRow(chanend c_in, uint32_t row[ROW_LENGTH])
         uint32_t num = 0;
         //read in from file
         for( int x = 0; x < 32; x++ ) { //go through each pixel per line teehee
-            //printf("reading pixel value\n");
             c_in :> val;                    //read the pixel value
-            //printf("read pixel value\n");
             //add a bit to the integer at the index
-            //num |= ((uint32_t)(val != 0) << x % 32);
             if (!val == 0)
             {
                 num = addBitAtIndex(num, x % 32);
             }
         }
         row[i] = num;
-        //printf("%u\n", num);
     }
 }
 
@@ -216,6 +203,74 @@ void sendRow(chanend c_out, uint32_t row[ROW_LENGTH])
     {
         c_out <: row[i];
     }
+}
+
+void readImage(chanend wcs[WORKERS], chanend c_in)
+{
+    //pai
+    //yes
+    //got a pai
+    //some code
+    uint32_t firstWorker [IMHT/WORKERS + 1][ROW_LENGTH];
+      for (int r = 0; r < IMHT/WORKERS + 1; r++)
+      {
+          readRow(c_in, firstWorker[r]);
+      }
+      uint32_t row[ROW_LENGTH];
+      //send last processing rows of first worker to next worker
+      sendRow(wcs[1], firstWorker[IMHT/WORKERS-1]);
+      sendRow(wcs[1], firstWorker[IMHT/WORKERS]);
+      for (int r = IMHT/WORKERS + 1; r < IMHT-1; r++)
+      {
+          readRow(c_in, row);
+          //send the row to the worker that will actually process it
+          sendRow(wcs[r / (IMHT/WORKERS)], row);
+          //before a join
+          if (((r + 1) % (IMHT/WORKERS)) == 0)
+          {
+              sendRow(wcs[(r + 2) / (IMHT/WORKERS)], row);
+          }
+          //after a join
+          else if (((r + 1) % (IMHT/WORKERS)) == 1)
+          {
+              sendRow(wcs[(r / (IMHT/WORKERS)) - 1], row);
+          }
+      }
+      readRow(c_in, row);
+      //send the last row to the last worker to process it
+      sendRow(wcs[WORKERS-1],row);
+      //send the last row to the first worker to not process it
+      sendRow(wcs[0],row);
+      //send the very first row to the last worker to not process it
+      sendRow(wcs[WORKERS - 1], firstWorker[0]);
+      //send all other rows to the first worker
+      for (int r = 0; r < IMHT/WORKERS + 1; r++)
+      {
+          sendRow(wcs[0], firstWorker[r]);
+      }
+}
+
+void generateImage(chanend wcs[WORKERS], chanend c_timer)
+{
+      //for each worker
+      for (int w = 0; w < WORKERS; w++)
+      {
+          //for each row in worker
+          for (int r = 0; r < IMWD/WORKERS + 2; r++)
+          {
+              //generate each integer in the row
+              for (int i = 0; i < ROW_LENGTH; i++)
+              {
+                  uint32_t value=0;
+                  for (int x=0; x<32;x++){
+                      if (rand()<LOWRANDBOUND){
+                          value=addBitAtIndex(value,x);
+                      }
+                  }
+                  wcs[w]<: value;
+              }
+          }
+      }
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -240,140 +295,17 @@ void distributor(chanend c_in, chanend c_out, chanend c_timer, chanend wcs[WORKE
   printf( "Reading image...\n" );
   c_leds <: (uchar)4;
 
-//  uint32_t rows[IMHT][ROW_LENGTH];
-//  if (GENERATE)
-//  {
-//      for (int y = 0; y < IMHT; y++)
-//      {
-//          c_timer <: 37;
-//          c_timer :> uint32_t x;
-//          uint32_t t;
-//          c_timer :> t;
-//          for (uint32_t i = 0; i < ROW_LENGTH; i++)
-//          {
-//              rows[y][i] = (uint32_t)(t / (i + 1));
-//          }
-//      }
-//  }
-//  else
-//  {
-//      uchar val;
-//      for( int y = 0; y < IMHT; y++ ) {   //go through all lines
-//        for (int i = 0; i < ROW_LENGTH; i++)
-//        {
-//            rows[y][i] = 0u;
-//        }
-//        for( int x = 0; x < IMWD; x++ ) { //go through each pixel per line teehee
-//          c_in :> val;                    //read the pixel value
-//          //add a bit to the integer at the index
-//          rows[y][x/32] |= ((uint32_t)(val != 0) << x % 32);
-//        }
-//      }
-//  }
-
-  //printf("First int in first row = %u\n", rows[0][0]);
-
-  //provide workers with initial values
-  //read in the first worker bar the first line (ie the last line to be read)
-  uint32_t firstWorker [IMHT/WORKERS + 1][ROW_LENGTH];
-  for (int r = 0; r < IMHT/WORKERS + 1; r++)
+  ///////////////////////////////////////////////////////////
+  //        provide workers with initial values            //
+  ///////////////////////////////////////////////////////////
+  if (GENERATE)
   {
-      readRow(c_in, firstWorker[r]);
+      generateImage(wcs, c_timer);
   }
-  //first row of next worker is last row of first worker
-  uint32_t row[ROW_LENGTH];
-//  for (int i = 0; i < ROW_LENGTH; i++)
-//  {
-//      row[i] = firstWorker[IMHT/WORKERS][i];
-//  }
-  //read all remaining rows
-  //printf("hohoho\n");
-  sendRow(wcs[1], firstWorker[IMHT/WORKERS-1]);
-  sendRow(wcs[1], firstWorker[IMHT/WORKERS]);
-  for (int r = IMHT/WORKERS + 1; r < IMHT-1; r++)
+  else
   {
-      readRow(c_in, row);
-      //send the row to the worker that will actually process it
-      sendRow(wcs[r / (IMHT/WORKERS)], row);
-      //before a join
-      //printf("r = %i \n", r);
-      if (((r + 1) % (IMHT/WORKERS)) == 0)
-      {
-          //printf("send to worker %i \n",(r + 2) / (IMHT/WORKERS) );
-          sendRow(wcs[(r + 2) / (IMHT/WORKERS)], row);
-      }
-      //after a join
-      else if (((r + 1) % (IMHT/WORKERS)) == 1)
-      {
-          sendRow(wcs[(r / (IMHT/WORKERS)) - 1], row);
-      }
+      readImage(wcs, c_in);
   }
-  readRow(c_in, row);
-  //send the last row to the last worker to process it
-  sendRow(wcs[WORKERS-1],row);
-  //send the last row to the first worker to not process it
-  sendRow(wcs[0],row);
-  //printf("Main read βρόχος finished\n");
-  //send the very first row to the last worker to not process it
-  sendRow(wcs[WORKERS - 1], firstWorker[0]);
-  //send all other rows to the first worker
-  for (int r = 0; r < IMHT/WORKERS + 1; r++)
-  {
-      sendRow(wcs[0], firstWorker[r]);
-  }
-  //printf("All initial values have been sent to workers\n");
-//  //for each worker
-//  for (int w = 0; w < WORKERS; w++)
-//  {
-//      //for each row in worker
-//      for (int r = 0; r < IMWD/WORKERS + 2; r++)
-//      {
-//          //adjust row number to allow for previous workers and shifting it back one
-//          int rowNo = r + (w * IMWD/WORKERS) -1;
-//          //allow for wrap arounds
-//          if (rowNo < 0)
-//          {
-//              rowNo = IMHT - 1;
-//          }
-//          else if (rowNo >= IMHT)
-//          {
-//              rowNo = 0;
-//          }
-//          uint32_t t = 0;
-//          if (GENERATE)
-//          {
-//             c_timer <: 37;
-//             c_timer :> uint32_t x;
-//             uint32_t t;
-//             c_timer :> t;
-//          }
-
-//          uchar val;
-//          //export each integer in the row
-//          for (int i = 0; i < ROW_LENGTH; i++)
-//          {
-//              uint32_t num = 0;
-//              if (!GENERATE)
-//              {
-//                  //read in from file
-//                  for( int x = 0; x < IMWD; x++ ) { //go through each pixel per line teehee
-//                      //printf("reading pixel value\n");
-//                      c_in :> val;                    //read the pixel value
-//                      //printf("read pixel value\n");
-//                      //add a bit to the integer at the index
-//                      num |= ((uint32_t)(val != 0) << x % 32);
-//                  }
-//              }
-//              else
-//              {
-//                  //generate a number from the system clock
-//                  num = (uint32_t)(t / (i + 1));
-//              }
-//              //send integer to worker
-//              wcs[w] <: num;
-//          }
-//      }
-//  }
 
   printf("Processing starting\n");
 
@@ -385,7 +317,7 @@ void distributor(chanend c_in, chanend c_out, chanend c_timer, chanend wcs[WORKE
   c_timer :> startTimer;
 
   int rounds = 0;
-  //main processing ιθθρ
+  //main processing loop
   while (rounds < MAXROUNDS)
   {
       //toggle status LED
@@ -427,16 +359,15 @@ void distributor(chanend c_in, chanend c_out, chanend c_timer, chanend wcs[WORKE
               wcs[w] <: edgeRows[getNextWorker(w)][i];
           }
       }
-      //printf("Round complete\n");
       rounds++;
       //FIX THIS YOU DEGENERATE SLEEP DEPRIVED SKELETON
-      //OR THE CRAZY GREEK ONE, YOU COULD ALSO FIX THIS ιθθρ
+      //OR THE CRAZY GREEK ONE, YOU COULD ALSO FIX THIS LOOP
       uchar pause = 0;
       //check if execution should pause
       c_pause <: (uchar)37;
       c_pause :> pause;
       //print out on some round
-      if (rounds == 2)
+      if (rounds == ROUNDOUT )
       {
           pause = 1;
       }
@@ -450,7 +381,7 @@ void distributor(chanend c_in, chanend c_out, chanend c_timer, chanend wcs[WORKE
           //turn off processing LED
           c_leds <: (uchar)1;
 
-          if (pause == 1)
+          if (pause == 1) //output button is push
           {
               printf("Outputting to file\n");
               c_leds <: (uchar)2;
@@ -464,39 +395,33 @@ void distributor(chanend c_in, chanend c_out, chanend c_timer, chanend wcs[WORKE
                       //for each uint32_t in the row
                       for (int n = 0; n < ROW_LENGTH; n++)
                       {
-                          //printf("reading from worker channel\n");
                           uint32_t x;
                           wcs[w] :> x; //read in from worker channel
-                          //printf("read from worker channel\n");
                           uchar ffs = getIntSize(n);
-                          //printf("int size = %u\n", ffs);
                           for (int i = 0; i < ffs; i++)
                           {
-                              if (x % 2)
+                              if (x % 2) //alive
                               {
-                                  //printf("Outputting 255\n");
                                   c_out <: (uchar)255;
                               }
-                              else
+                              else //ded
                               {
-                                  //printf("Outputting 0\n");
                                   c_out <: (uchar)0;
                               }
                               x /= 2;
-                              //printf("Send uchar to output channel\n");
                           }
                       }
                   }
               }
 
           }
-          else if (pause == 2)
+          else if (pause == 2) //board is tilted, print number of alive cells
           {
               printf("Board is now TILTED\n");
               c_leds <: (uchar)8;
               int aliveCount = 0;
               int x;
-              for (int w = 0; w < WORKERS; w++)
+              for (int w = 0; w < WORKERS; w++) //get each worker's cell count
               {
                   wcs[w] :> x;
                   aliveCount += x;
@@ -509,7 +434,7 @@ void distributor(chanend c_in, chanend c_out, chanend c_timer, chanend wcs[WORKE
               printf("Waiting for unpause\n");
               c_pause <: (uchar)37;
               c_pause :> pause;
-              delay_milliseconds(100);
+              delay_milliseconds(100); //love that this exists
           }
           if (oldPause == 1)
           {
@@ -532,11 +457,13 @@ void distributor(chanend c_in, chanend c_out, chanend c_timer, chanend wcs[WORKE
   printf("Processing complete in time: %f\n", timeInSeconds(endCounter, endTimer, 10000000) - timeInSeconds(startCounter, startTimer, 10000000));
 }
 
+//check if cell at index is alive
 int checkAlive(int r, int i, uint32_t rows[IMWD/WORKERS + 2][ROW_LENGTH])
 {
     return rows[r][i / 32] & (1 << (i % 32));
 }
 
+//evaluate if cell at row r, index i should be alive next round
 uchar evaluate(int r, int i, uint32_t rows[IMWD/WORKERS + 2][ROW_LENGTH])
 {
     int neighbors = 0;
@@ -552,23 +479,14 @@ uchar evaluate(int r, int i, uint32_t rows[IMWD/WORKERS + 2][ROW_LENGTH])
                 if (checkAlive(r + y, (i + x + IMWD) % IMWD, rows)) //cell is alive
                 {
                     neighbors++;
-                    if (r == 8 && i == 1)
-                    {
-                        printf("Cell 1, 8 has a neighbor at x = %i, y = %i\n", x, y);
-                    }
                 }
             }
         }
     }
     if (checkAlive(r, i, rows))
     {
-        if (r == 8 && i == 1)
-        {
-            printf("Found 1, 8 with %i neighbors\n", neighbors);
-        }
         if (neighbors <= 3 && neighbors >= 2) //stay alive
         {
-            //printf("Cell staying alive\n");
             return 1;
         }
     }
@@ -582,6 +500,22 @@ uchar evaluate(int r, int i, uint32_t rows[IMWD/WORKERS + 2][ROW_LENGTH])
     return 0;
 }
 
+int wakeUp(int value, int aliveTotal)
+{
+    if (aliveTotal>0){
+        if (value==2){
+            value=1;
+        }
+        else if (value==1){
+            value=0;
+        }
+    }
+    else {
+        value=2;
+    }
+    return value;
+}
+
 void Worker(chanend channel, int id)
 {
     uint32_t rows[IMWD/WORKERS + 2][ROW_LENGTH];
@@ -593,7 +527,13 @@ void Worker(chanend channel, int id)
             channel :> rows[r][i];
         }
     }
-    printf("Worker %i received all initial values\n", id);
+    //0 = has alive cells
+    //1 = recently become alive
+    //2 = completely dark
+    uchar dark[IMWD/WORKERS + 2];
+    for (int i=0;i<IMWD/WORKERS + 2; i++){
+        dark[i]=0;
+    }
     //main processing loop
     //shit
     //more shjit
@@ -605,7 +545,7 @@ void Worker(chanend channel, int id)
     //i don't know, he's not telling me
     // "add the fucking shit"
     //okay
-    //ιθθρ brother
+    //loop brother
     while (1)
     {
         //initialize new array
@@ -620,17 +560,29 @@ void Worker(chanend channel, int id)
         //each row
         for (int r = 1; r <= IMWD/WORKERS; r++)
         {
-            //each cell
-            for (int i = 0; i < IMWD; i++)
+            //row is not dark
+            if (dark[r]!=2)
             {
-                if (evaluate(r, i, rows))
+                uint32_t aliveCells = 0;
+                //each cell
+                for (int i = 0; i < IMWD; i++)
                 {
-                    if (r == 8 && i == 1)
+                    if (evaluate(r, i, rows))
                     {
-                        printf("Pixel 1, 8 stays alive in worker %i\n", id);
+                        rowsNew[r][i / 32] = addBitAtIndex(rowsNew[r][i / 32], i % 32);
+                        aliveCells++;
                     }
-                    rowsNew[r][i / 32] = addBitAtIndex(rowsNew[r][i / 32], i % 32);
                 }
+                if (aliveCells == 0)
+                {
+                    dark[r] = 2;
+                }
+                else if (dark[r]==1){
+                    dark[r]=0;
+                }
+            }
+            else if (dark[r-1] == 0 || dark[r+1] == 0){
+                dark[r] = 1;
             }
         }
         //clone array
@@ -641,7 +593,6 @@ void Worker(chanend channel, int id)
                 rows[y][x] = rowsNew[y][x];
             }
         }
-        //printf("Worker %i finished processing a round\n", id);
         //send out 1st and (n-1)th rows
         for (int i = 0; i < ROW_LENGTH; i++)
         {
@@ -652,14 +603,23 @@ void Worker(chanend channel, int id)
             channel <: rows[IMWD/WORKERS][i];
         }
         //read back 0th and nth rows
+        uint32_t aliveTotal=0;
+        uint32_t temp;
         for (int i = 0; i < ROW_LENGTH; i++)
         {
-            channel :> rows[0][i];
+            channel :> temp;
+            aliveTotal += temp;
+            rows[0][i]=temp;
         }
+        dark[0] = wakeUp(dark[0], aliveTotal);
+        aliveTotal = 0;
         for (int i = 0; i < ROW_LENGTH; i++)
         {
-            channel :> rows[IMWD/WORKERS + 1][i];
+            channel :> temp;
+            aliveTotal += temp;
+            rows[IMWD/WORKERS + 1][i]=temp;
         }
+        dark[IMWD/WORKERS + 1] = wakeUp(dark[IMWD/WORKERS + 1], aliveTotal);
         uchar pause;
         channel :> pause;
         //send all the rows processed to distributor
@@ -684,7 +644,7 @@ void Worker(chanend channel, int id)
                     uint32_t x = rows[r][n];
                     for (int i = 0; i < getIntSize(n); i++)
                     {
-                        if (x % 2)
+                        if (x % 2) //TODO - change to checkalive
                         {
                             count++;
                         }
@@ -724,7 +684,7 @@ void DataOutStream(chanend c_in)
             c_in :> line[ x ];
           }
           _writeoutline( line, IMWD );
-          printf( "DataOutStream: Line written...\n" );
+          //printf( "DataOutStream: Line written...\n" );
         }
 
         //Close the PGM image
@@ -800,11 +760,13 @@ void Timer(chanend c_timer)
     {
         select
         {
+            //something requested a timer value
             case c_timer :> uint32_t x:
                 t :> x;
                 c_timer <: counter;
                 c_timer <: x % interval;
                 break;
+            //increment interval time
             case t when timerafter(time) :> uint32_t x:
                 counter++;
                 time += interval;
@@ -813,15 +775,15 @@ void Timer(chanend c_timer)
     }
 }
 
-void test()
-{
-    uint32_t n = 0;
-    unsigned int index = 6;
-    printf("bit inserted at %u = %u\n", index, n = addBitAtIndex(n, index));
-    index = 17;
-    printf("bit inserted at %u = %u\n", index, n = addBitAtIndex(n, index));
-    printf("\n");
-}
+//void test()
+//{
+//    uint32_t n = 0;
+//    unsigned int index = 6;
+//    printf("bit inserted at %u = %u\n", index, n = addBitAtIndex(n, index));
+//    index = 17;
+//    printf("bit inserted at %u = %u\n", index, n = addBitAtIndex(n, index));
+//    printf("\n");
+//}
 
 /////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -836,18 +798,19 @@ chan c_inIO, c_outIO, c_timer, c_leds, c_buttons, c_stop, c_pauseLink, c_accel; 
 chan workerChans[WORKERS];
 par {
     on tile[0].core[0]: Timer(c_timer); //timer thread to keep track of a sensible real world time
-    on tile[0].core[0]: LEDController(c_leds);
+    on tile[0].core[0]: LEDController(c_leds); //basically just gives us toggleable LEDs, probably more trouble than is worth
     on tile[0]: i2c_master(i2c, 1, p_scl, p_sda, 10);   //server thread providing orientation data
     on tile[0]: orientation(i2c[0], c_accel);        //client thread reading orientation data
-    on tile[0]: {
+    on tile[0]: { //we can run these sequentially as the datainstream only needs to run once
         DataInStream(c_inIO);
         DataOutStream(c_outIO);
     }
     on tile[0]: distributor(c_inIO, c_outIO, c_timer, workerChans, c_leds, c_buttons, c_stop);//thread to coordinate work on image
-    on tile[0]: buttonListener(buttons, c_buttons, c_pauseLink);
-    on tile[0]: pauseController(c_pauseLink, c_accel, c_stop);
+    on tile[0]: buttonListener(buttons, c_buttons, c_pauseLink); //listens to buttons, vat vanderful musik zey make
+    on tile[0]: pauseController(c_pauseLink, c_accel, c_stop); //distributes pause value
     //on tile[0]: test();
-    par (int i = 0; i < WORKERS; i++)
+    on tile[0]: Worker(workerChans[0], 0);
+    par (int i = 1; i < WORKERS; i++) //start workers in order, giving them IDs for debug purposes
     {
         on tile[1]: Worker(workerChans[i], i);
     }

@@ -10,3 +10,10 @@ Okay, prints are satan.
 
 20 rounds of 64 = 0.926022
 
+Concurrent 1.0
+100 rounds of 512: 54.822575
+Read in time... Lengthy
+
+Using basic system clock generation strategy
+100 rounds of 512: 54.984530
+
