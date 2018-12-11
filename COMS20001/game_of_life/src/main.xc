@@ -1,4 +1,4 @@
-// COMS20001 - Cellular Automaton Farm - Initial Code Skeleton #CRI
+// COMS20001 - Cellular Automaton Farm - Initial Code Skeleton
 // (using the XMOS i2c accelerometer demo code)
 
 #include <platform.h>
@@ -8,16 +8,16 @@
 #include "pgmIO.h"
 #include "i2c.h"
 
-#define  IMHT 64                  //image height
-#define  IMWD 64                  //image width
-#define GENERATE 0 //should the grid be generated or read in
+#define  IMHT 1024                  //image height
+#define  IMWD 1024                  //image width
+#define GENERATE 1 //should the grid be generated or read in
 #define ROW_LENGTH (IMWD/32) + (IMWD % 32 != 0)
 #define WORKERS 8
 #define MAXROUNDS 100
-#define infname "64test.pgm"     //put your input image path here
+#define infname "64x64.pgm"     //put your input image path here
 #define outfname "testout.pgm" //put your output image path here
-#define ROUNDOUT 1
-#define ALIVERATIO 0.4
+#define ROUNDOUT -1
+#define ALIVERATIO 0.0
 #define LOWRANDBOUND RAND_MAX*ALIVERATIO
 
 typedef unsigned char uchar;      //using uchar as shorthand
@@ -317,7 +317,7 @@ void distributor(chanend c_in, chanend c_out, chanend c_timer, chanend wcs[WORKE
   c_timer :> startTimer;
 
   int rounds = 0;
-  //main processing loop
+  //main processing ιθθρ
   while (rounds < MAXROUNDS)
   {
       //toggle status LED
@@ -361,13 +361,13 @@ void distributor(chanend c_in, chanend c_out, chanend c_timer, chanend wcs[WORKE
       }
       rounds++;
       //FIX THIS YOU DEGENERATE SLEEP DEPRIVED SKELETON
-      //OR THE CRAZY GREEK ONE, YOU COULD ALSO FIX THIS LOOP
+      //OR THE CRAZY GREEK ONE, YOU COULD ALSO FIX THIS ιθθρ
       uchar pause = 0;
       //check if execution should pause
       c_pause <: (uchar)37;
       c_pause :> pause;
       //print out on some round
-      if (rounds >= ROUNDOUT )
+      if (rounds == ROUNDOUT )
       {
           pause = 1;
       }
@@ -500,22 +500,6 @@ uchar evaluate(int r, int i, uint32_t rows[IMWD/WORKERS + 2][ROW_LENGTH])
     return 0;
 }
 
-int wakeUp(int value, int aliveTotal)
-{
-    if (aliveTotal>0){
-        if (value==2){
-            value=1;
-        }
-        else if (value==1){
-            value=0;
-        }
-    }
-    else {
-        value=2;
-    }
-    return value;
-}
-
 void Worker(chanend channel, int id)
 {
     uint32_t rows[IMWD/WORKERS + 2][ROW_LENGTH];
@@ -527,16 +511,7 @@ void Worker(chanend channel, int id)
             channel :> rows[r][i];
         }
     }
-    //0 = has alive cells
-    //1 = recently become alive
-    //2 = completely dark
-    uchar dark[IMWD/WORKERS + 2][ROW_LENGTH];
-    for (int i=0;i<IMWD/WORKERS + 2; i++){
-        for (int j=0; j<ROW_LENGTH; j++){
-            dark[i][j]=0;
-        }
-    }
-    //main processing loop
+    //main processing ιθθρ
     //shit
     //more shjit
     //i can't computer send help
@@ -547,41 +522,31 @@ void Worker(chanend channel, int id)
     //i don't know, he's not telling me
     // "add the fucking shit"
     //okay
-    //loop brother
+    //ιθθρ brother
+    uint32_t rowBuffer[2][ROW_LENGTH];
+    uchar currentRow = 0;
     while (1)
     {
-        //initialize new array
-        uint32_t rowsNew[IMWD/WORKERS + 2][ROW_LENGTH];
-        for (int y = 0; y < IMWD/WORKERS + 2; y++)
-        {
-            for (int x = 0; x < ROW_LENGTH; x++)
-            {
-                rowsNew[y][x] = (uint32_t)0;
-            }
-        }
+//        //initialize new array
+//        uint32_t rowsNew[IMWD/WORKERS + 2][ROW_LENGTH];
+//        for (int y = 0; y < IMWD/WORKERS + 2; y++)
+//        {
+//            for (int x = 0; x < ROW_LENGTH; x++)
+//            {
+//                rowsNew[y][x] = (uint32_t)0;
+//            }
+//        }
+        rowBuffer[0] = 0;
+        rowBuffer[1] = 0;
         //each row
         for (int r = 1; r <= IMWD/WORKERS; r++)
         {
-            for (int i = 0; i<ROW_LENGTH; i++){
-                //int is not dark
-                if (dark[r][i]!=2){
-                    uint32_t aliveCells = 0;
-                    //each cell
-                    for (int j = 0; j < 32; j++){
-                        if (evaluate(r, j+32*i, rows)){
-                             rowsNew[r][i] = addBitAtIndex(rowsNew[r][i], j % 32);
-                             aliveCells++;
-                        }
-                    }
-                    if (aliveCells == 0){
-                        dark[r][i] = 2;
-                    }
-                    else if (dark[r]==1){
-                        dark[r][i]=0;
-                    }
-                }
-                if ((i==0 && (dark[r][ROW_LENGTH-1]==0 ||dark[r][1]==0 )) || (i==ROW_LENGTH-1 && (dark[r][0]==0|| dark[ROW_LENGTH-2])) || (i!=0 && i!=ROW_LENGTH-1 && (dark[r-1][i] == 0 || dark[r+1][i] == 0))){
-                    dark[r][i] = 1;
+            //each cell
+            for (int i = 0; i < IMWD; i++)
+            {
+                if (evaluate(r, i, rows))
+                {
+                    rowsNew[r][i / 32] = addBitAtIndex(rowsNew[r][i / 32], i % 32);
                 }
             }
         }
@@ -603,22 +568,13 @@ void Worker(chanend channel, int id)
             channel <: rows[IMWD/WORKERS][i];
         }
         //read back 0th and nth rows
-        uint32_t aliveTotal=0;
-        uint32_t temp;
         for (int i = 0; i < ROW_LENGTH; i++)
         {
-            channel :> temp;
-            aliveTotal += temp;
-            rows[0][i]=temp;
-            dark[0][i] = wakeUp(dark[0][i], aliveTotal);
+            channel :> rows[0][i];
         }
-        aliveTotal = 0;
         for (int i = 0; i < ROW_LENGTH; i++)
         {
-            channel :> temp;
-            aliveTotal += temp;
-            rows[IMWD/WORKERS + 1][i]=temp;
-            dark[IMWD/WORKERS + 1][i] = wakeUp(dark[IMWD/WORKERS + 1][i], aliveTotal);
+            channel :> rows[IMWD/WORKERS + 1][i];
         }
         uchar pause;
         channel :> pause;
@@ -807,11 +763,10 @@ par {
     }
     on tile[0]: distributor(c_inIO, c_outIO, c_timer, workerChans, c_leds, c_buttons, c_stop);//thread to coordinate work on image
     on tile[0]: buttonListener(buttons, c_buttons, c_pauseLink); //listens to buttons, vat vanderful musik zey make
-    on tile[0].core[0]: pauseController(c_pauseLink, c_accel, c_stop); //distributes pause value
+    on tile[0]: pauseController(c_pauseLink, c_accel, c_stop); //distributes pause value
     //on tile[0]: test();
     on tile[0]: Worker(workerChans[0], 0);
-    on tile[0]: Worker(workerChans[1], 1);
-    par (int i = 2; i < WORKERS; i++) //start workers in order, giving them IDs for debug purposes
+    par (int i = 1; i < WORKERS; i++) //start workers in order, giving them IDs for debug purposes
     {
         on tile[1]: Worker(workerChans[i], i);
     }
