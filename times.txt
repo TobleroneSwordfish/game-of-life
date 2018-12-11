@@ -17,3 +17,27 @@ Read in time... Lengthy
 Using basic system clock generation strategy
 100 rounds of 512: 54.984530
 
+on faster generation strategy
+#define  IMHT 1024                  //image height
+#define  IMWD 1024                  //image width
+#define GENERATE 1 //should the grid be generated or read in
+#define ROW_LENGTH (IMWD/32) + (IMWD % 32 != 0)
+#define WORKERS 8
+#define MAXROUNDS 100
+#define infname "64x64.pgm"     //put your input image path here
+#define outfname "testout.pgm" //put your output image path here
+#define ROUNDOUT -1
+#define ALIVERATIO 0.4
+
+produces: Processing complete in time: 195.418355
+
+same but with inlines: Processing complete in time: 195.303344
+
+which is weird, maybe xTimeComposer defaults to -O0?
+
+Okay, changed to -O3, and now with or without inlines it's about 4 times faster
+
+Processing complete in time: 55.772685
+
+HMMM
+
