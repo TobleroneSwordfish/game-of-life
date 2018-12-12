@@ -1,0 +1,670 @@
+<taskgraph>
+<task>
+  <name>delay_seconds</name>
+  <inFunction>delay_seconds</inFunction>
+  <calledFunction>delay_ticks_longlong</calledFunction>
+</task>
+<task>
+  <name>delay_milliseconds</name>
+  <inFunction>delay_milliseconds</inFunction>
+  <calledFunction>delay_ticks_longlong</calledFunction>
+</task>
+<task>
+  <name>delay_microseconds</name>
+  <inFunction>delay_microseconds</inFunction>
+  <calledFunction>delay_ticks_longlong</calledFunction>
+</task>
+<task>
+  <name>atanl</name>
+  <inFunction>atanl</inFunction>
+</task>
+<task>
+  <name>cosl</name>
+  <inFunction>cosl</inFunction>
+</task>
+<task>
+  <name>sinl</name>
+  <inFunction>sinl</inFunction>
+</task>
+<task>
+  <name>tanl</name>
+  <inFunction>tanl</inFunction>
+</task>
+<task>
+  <name>tanhl</name>
+  <inFunction>tanhl</inFunction>
+</task>
+<task>
+  <name>frexpl</name>
+  <inFunction>frexpl</inFunction>
+</task>
+<task>
+  <name>modfl</name>
+  <inFunction>modfl</inFunction>
+</task>
+<task>
+  <name>ceill</name>
+  <inFunction>ceill</inFunction>
+</task>
+<task>
+  <name>fabsl</name>
+  <inFunction>fabsl</inFunction>
+</task>
+<task>
+  <name>floorl</name>
+  <inFunction>floorl</inFunction>
+</task>
+<task>
+  <name>log1pl</name>
+  <inFunction>log1pl</inFunction>
+</task>
+<task>
+  <name>expm1l</name>
+  <inFunction>expm1l</inFunction>
+</task>
+<task>
+  <name>acosl</name>
+  <inFunction>acosl</inFunction>
+</task>
+<task>
+  <name>asinl</name>
+  <inFunction>asinl</inFunction>
+</task>
+<task>
+  <name>atan2l</name>
+  <inFunction>atan2l</inFunction>
+</task>
+<task>
+  <name>coshl</name>
+  <inFunction>coshl</inFunction>
+</task>
+<task>
+  <name>sinhl</name>
+  <inFunction>sinhl</inFunction>
+</task>
+<task>
+  <name>expl</name>
+  <inFunction>expl</inFunction>
+</task>
+<task>
+  <name>ldexpl</name>
+  <inFunction>ldexpl</inFunction>
+</task>
+<task>
+  <name>logl</name>
+  <inFunction>logl</inFunction>
+</task>
+<task>
+  <name>log10l</name>
+  <inFunction>log10l</inFunction>
+</task>
+<task>
+  <name>log2</name>
+  <inFunction>log2</inFunction>
+</task>
+<task>
+  <name>log2f</name>
+  <inFunction>log2f</inFunction>
+</task>
+<task>
+  <name>log2l</name>
+  <inFunction>log2l</inFunction>
+</task>
+<task>
+  <name>powl</name>
+  <inFunction>powl</inFunction>
+</task>
+<task>
+  <name>sqrtl</name>
+  <inFunction>sqrtl</inFunction>
+</task>
+<task>
+  <name>fmodl</name>
+  <inFunction>fmodl</inFunction>
+</task>
+<task>
+  <name>hypotl</name>
+  <inFunction>hypotl</inFunction>
+</task>
+<task>
+  <name>copysignl</name>
+  <inFunction>copysignl</inFunction>
+</task>
+<task>
+  <name>nanl</name>
+  <inFunction>nanl</inFunction>
+</task>
+<task>
+  <name>ilogbl</name>
+  <inFunction>ilogbl</inFunction>
+</task>
+<task>
+  <name>logbl</name>
+  <inFunction>logbl</inFunction>
+</task>
+<task>
+  <name>asinhl</name>
+  <inFunction>asinhl</inFunction>
+</task>
+<task>
+  <name>cbrtl</name>
+  <inFunction>cbrtl</inFunction>
+</task>
+<task>
+  <name>nextafterl</name>
+  <inFunction>nextafterl</inFunction>
+</task>
+<task>
+  <name>nexttoward</name>
+  <inFunction>nexttoward</inFunction>
+</task>
+<task>
+  <name>nexttowardf</name>
+  <inFunction>nexttowardf</inFunction>
+</task>
+<task>
+  <name>nexttowardl</name>
+  <inFunction>nexttowardl</inFunction>
+</task>
+<task>
+  <name>rintl</name>
+  <inFunction>rintl</inFunction>
+</task>
+<task>
+  <name>scalbnl</name>
+  <inFunction>scalbnl</inFunction>
+</task>
+<task>
+  <name>exp2l</name>
+  <inFunction>exp2l</inFunction>
+</task>
+<task>
+  <name>scalblnl</name>
+  <inFunction>scalblnl</inFunction>
+</task>
+<task>
+  <name>tgammal</name>
+  <inFunction>tgammal</inFunction>
+</task>
+<task>
+  <name>nearbyintl</name>
+  <inFunction>nearbyintl</inFunction>
+</task>
+<task>
+  <name>lrintl</name>
+  <inFunction>lrintl</inFunction>
+</task>
+<task>
+  <name>llrintl</name>
+  <inFunction>llrintl</inFunction>
+</task>
+<task>
+  <name>roundl</name>
+  <inFunction>roundl</inFunction>
+</task>
+<task>
+  <name>lroundl</name>
+  <inFunction>lroundl</inFunction>
+</task>
+<task>
+  <name>llroundl</name>
+  <inFunction>llroundl</inFunction>
+</task>
+<task>
+  <name>truncl</name>
+  <inFunction>truncl</inFunction>
+</task>
+<task>
+  <name>remquol</name>
+  <inFunction>remquol</inFunction>
+</task>
+<task>
+  <name>fdiml</name>
+  <inFunction>fdiml</inFunction>
+</task>
+<task>
+  <name>fmaxl</name>
+  <inFunction>fmaxl</inFunction>
+</task>
+<task>
+  <name>fminl</name>
+  <inFunction>fminl</inFunction>
+</task>
+<task>
+  <name>fmal</name>
+  <inFunction>fmal</inFunction>
+</task>
+<task>
+  <name>acoshl</name>
+  <inFunction>acoshl</inFunction>
+</task>
+<task>
+  <name>atanhl</name>
+  <inFunction>atanhl</inFunction>
+</task>
+<task>
+  <name>remainderl</name>
+  <inFunction>remainderl</inFunction>
+</task>
+<task>
+  <name>lgammal</name>
+  <inFunction>lgammal</inFunction>
+</task>
+<task>
+  <name>erfl</name>
+  <inFunction>erfl</inFunction>
+</task>
+<task>
+  <name>erfcl</name>
+  <inFunction>erfcl</inFunction>
+</task>
+<task>
+  <name>_safe_memcmp</name>
+  <inFunction>_safe_memcmp</inFunction>
+</task>
+<task>
+  <name>_safe_memmove</name>
+  <inFunction>_safe_memmove</inFunction>
+</task>
+<task>
+  <name>_safe_memset</name>
+  <inFunction>_safe_memset</inFunction>
+</task>
+<task>
+  <name>read_reg</name>
+  <inFunction>read_reg</inFunction>
+</task>
+<task>
+  <name>write_reg</name>
+  <inFunction>write_reg</inFunction>
+</task>
+<task>
+  <name>read_reg8_addr16</name>
+  <inFunction>read_reg8_addr16</inFunction>
+</task>
+<task>
+  <name>write_reg8_addr16</name>
+  <inFunction>write_reg8_addr16</inFunction>
+</task>
+<task>
+  <name>read_reg16</name>
+  <inFunction>read_reg16</inFunction>
+</task>
+<task>
+  <name>write_reg16</name>
+  <inFunction>write_reg16</inFunction>
+</task>
+<task>
+  <name>read_reg16_addr8</name>
+  <inFunction>read_reg16_addr8</inFunction>
+</task>
+<task>
+  <name>write_reg16_addr8</name>
+  <inFunction>write_reg16_addr8</inFunction>
+</task>
+<task>
+  <name>buttonListener</name>
+  <inFunction>buttonListener</inFunction>
+</task>
+<task>
+  <name>pauseController</name>
+  <inFunction>pauseController</inFunction>
+</task>
+<task>
+  <name>LEDController</name>
+  <inFunction>LEDController</inFunction>
+</task>
+<task>
+  <name>DataInStream</name>
+  <inFunction>DataInStream</inFunction>
+</task>
+<task>
+  <name>addBitAtIndex</name>
+  <inFunction>addBitAtIndex</inFunction>
+</task>
+<task>
+  <name>timeInSeconds</name>
+  <inFunction>timeInSeconds</inFunction>
+</task>
+<task>
+  <name>getPreviousWorker</name>
+  <inFunction>getPreviousWorker</inFunction>
+</task>
+<task>
+  <name>getNextWorker</name>
+  <inFunction>getNextWorker</inFunction>
+</task>
+<task>
+  <name>getIntSize</name>
+  <inFunction>getIntSize</inFunction>
+</task>
+<task>
+  <name>readRow</name>
+  <inFunction>readRow</inFunction>
+</task>
+<task>
+  <name>sendRow</name>
+  <inFunction>sendRow</inFunction>
+</task>
+<task>
+  <name>readImage</name>
+  <inFunction>readImage</inFunction>
+</task>
+<task>
+  <name>generateImage</name>
+  <inFunction>generateImage</inFunction>
+</task>
+<task>
+  <name>distributor</name>
+  <inFunction>distributor</inFunction>
+  <endOfSeqCalledFunction>printf</endOfSeqCalledFunction>
+</task>
+<task>
+  <name>checkAlive</name>
+  <inFunction>checkAlive</inFunction>
+</task>
+<task>
+  <name>evaluate</name>
+  <inFunction>evaluate</inFunction>
+</task>
+<task>
+  <name>Worker</name>
+  <inFunction>Worker</inFunction>
+</task>
+<task>
+  <name>DataOutStream</name>
+  <inFunction>DataOutStream</inFunction>
+</task>
+<task>
+  <name>orientation</name>
+  <inFunction>orientation</inFunction>
+</task>
+<task>
+  <name>Timer</name>
+  <inFunction>Timer</inFunction>
+</task>
+<task>
+  <name>main</name>
+  <inFunction>main</inFunction>
+</task>
+<task>
+  <name>_task_Timer_0</name>
+  <inFunction>main</inFunction>
+  <parent>main</parent>
+  <calledFunction>Timer</calledFunction>
+  <tile>tile[0]</tile>
+  <core>u0</core>
+  <inPar/>
+</task>
+<task>
+  <name>_task_LEDController_1</name>
+  <inFunction>main</inFunction>
+  <parent>main</parent>
+  <calledFunction>LEDController</calledFunction>
+  <tile>tile[0]</tile>
+  <core>u0</core>
+  <inPar/>
+</task>
+<task>
+  <name>_task_i2c_master_2</name>
+  <inFunction>main</inFunction>
+  <parent>main</parent>
+  <calledFunction>i2c_master</calledFunction>
+  <tile>tile[0]</tile>
+  <distributed/>
+  <inPar/>
+</task>
+<task>
+  <name>_task_orientation_3</name>
+  <inFunction>main</inFunction>
+  <parent>main</parent>
+  <calledFunction>orientation</calledFunction>
+  <tile>tile[0]</tile>
+  <core>4</core>
+  <inPar/>
+</task>
+<task>
+  <name>_task_DataOutStream_4</name>
+  <inFunction>main</inFunction>
+  <parent>main</parent>
+  <endOfSeqCalledFunction>DataOutStream</endOfSeqCalledFunction>
+  <tile>tile[0]</tile>
+  <core>5</core>
+  <inPar/>
+</task>
+<task>
+  <name>_task_distributor_5</name>
+  <inFunction>main</inFunction>
+  <parent>main</parent>
+  <calledFunction>distributor</calledFunction>
+  <tile>tile[0]</tile>
+  <core>6</core>
+  <inPar/>
+</task>
+<task>
+  <name>_task_buttonListener_6</name>
+  <inFunction>main</inFunction>
+  <parent>main</parent>
+  <calledFunction>buttonListener</calledFunction>
+  <tile>tile[0]</tile>
+  <core>7</core>
+  <inPar/>
+</task>
+<task>
+  <name>_task_pauseController_7</name>
+  <inFunction>main</inFunction>
+  <parent>main</parent>
+  <calledFunction>pauseController</calledFunction>
+  <tile>tile[0]</tile>
+  <core>8</core>
+  <inPar/>
+</task>
+<task>
+  <name>_task_Worker_8</name>
+  <inFunction>main</inFunction>
+  <parent>main</parent>
+  <calledFunction>Worker</calledFunction>
+  <tile>tile[0]</tile>
+  <core>9</core>
+  <inPar/>
+</task>
+<task>
+  <name>_task_9</name>
+  <inFunction>main</inFunction>
+  <parent>main</parent>
+  <core>10</core>
+  <inPar/>
+</task>
+<task>
+  <name>_task_Worker_10</name>
+  <inFunction>main</inFunction>
+  <parent>_task_9</parent>
+  <calledFunction>Worker</calledFunction>
+  <tile>tile[1]</tile>
+  <core>11</core>
+  <inPar/>
+</task>
+<task>
+  <name>_task_Worker_11</name>
+  <inFunction>main</inFunction>
+  <parent>_task_9</parent>
+  <calledFunction>Worker</calledFunction>
+  <tile>tile[1]</tile>
+  <core>12</core>
+  <inPar/>
+</task>
+<task>
+  <name>_task_Worker_12</name>
+  <inFunction>main</inFunction>
+  <parent>_task_9</parent>
+  <calledFunction>Worker</calledFunction>
+  <tile>tile[1]</tile>
+  <core>13</core>
+  <inPar/>
+</task>
+<task>
+  <name>_task_Worker_13</name>
+  <inFunction>main</inFunction>
+  <parent>_task_9</parent>
+  <calledFunction>Worker</calledFunction>
+  <tile>tile[1]</tile>
+  <core>14</core>
+  <inPar/>
+</task>
+<task>
+  <name>_task_Worker_14</name>
+  <inFunction>main</inFunction>
+  <parent>_task_9</parent>
+  <calledFunction>Worker</calledFunction>
+  <tile>tile[1]</tile>
+  <core>15</core>
+  <inPar/>
+</task>
+<task>
+  <name>_task_Worker_15</name>
+  <inFunction>main</inFunction>
+  <parent>_task_9</parent>
+  <calledFunction>Worker</calledFunction>
+  <tile>tile[1]</tile>
+  <core>16</core>
+  <inPar/>
+</task>
+<task>
+  <name>_task_Worker_16</name>
+  <inFunction>main</inFunction>
+  <parent>_task_9</parent>
+  <calledFunction>Worker</calledFunction>
+  <tile>tile[1]</tile>
+  <core>17</core>
+  <inPar/>
+</task>
+<connection>
+  <ends>
+    <end task="_task_Timer_0" type="chan"/>
+    <end task="_task_distributor_5" type="chan"/>
+  </ends>
+  <name>c_timer</name>
+</connection>
+<connection>
+  <ends>
+    <end task="_task_LEDController_1" type="chan"/>
+    <end task="_task_distributor_5" type="chan"/>
+  </ends>
+  <name>c_leds</name>
+</connection>
+<connection>
+  <ends>
+    <end task="_task_i2c_master_2" type="server"/>
+    <end task="_task_orientation_3" type="client"/>
+  </ends>
+    <index>0</index>
+  <name>i2c</name>
+   <interface>i2c_master_if</interface>
+</connection>
+<connection>
+  <ends>
+    <end task="_task_orientation_3" type="chan"/>
+    <end task="_task_pauseController_7" type="chan"/>
+  </ends>
+  <name>c_accel</name>
+</connection>
+<connection>
+  <ends>
+    <end task="_task_DataOutStream_4" type="chan"/>
+    <end task="_task_distributor_5" type="chan"/>
+  </ends>
+  <name>c_inIO</name>
+</connection>
+<connection>
+  <ends>
+    <end task="_task_DataOutStream_4" type="chan"/>
+    <end task="_task_distributor_5" type="chan"/>
+  </ends>
+  <name>c_outIO</name>
+</connection>
+<connection>
+  <ends>
+    <end task="_task_distributor_5" type="chan"/>
+    <end task="_task_Worker_8" type="chan"/>
+  </ends>
+    <index>0</index>
+  <name>workerChans</name>
+</connection>
+<connection>
+  <ends>
+    <end task="_task_distributor_5" type="chan"/>
+    <end task="_task_Worker_10" type="chan"/>
+  </ends>
+    <index>1</index>
+  <name>workerChans</name>
+</connection>
+<connection>
+  <ends>
+    <end task="_task_distributor_5" type="chan"/>
+    <end task="_task_Worker_11" type="chan"/>
+  </ends>
+    <index>2</index>
+  <name>workerChans</name>
+</connection>
+<connection>
+  <ends>
+    <end task="_task_distributor_5" type="chan"/>
+    <end task="_task_Worker_12" type="chan"/>
+  </ends>
+    <index>3</index>
+  <name>workerChans</name>
+</connection>
+<connection>
+  <ends>
+    <end task="_task_distributor_5" type="chan"/>
+    <end task="_task_Worker_13" type="chan"/>
+  </ends>
+    <index>4</index>
+  <name>workerChans</name>
+</connection>
+<connection>
+  <ends>
+    <end task="_task_distributor_5" type="chan"/>
+    <end task="_task_Worker_14" type="chan"/>
+  </ends>
+    <index>5</index>
+  <name>workerChans</name>
+</connection>
+<connection>
+  <ends>
+    <end task="_task_distributor_5" type="chan"/>
+    <end task="_task_Worker_15" type="chan"/>
+  </ends>
+    <index>6</index>
+  <name>workerChans</name>
+</connection>
+<connection>
+  <ends>
+    <end task="_task_distributor_5" type="chan"/>
+    <end task="_task_Worker_16" type="chan"/>
+  </ends>
+    <index>7</index>
+  <name>workerChans</name>
+</connection>
+<connection>
+  <ends>
+    <end task="_task_distributor_5" type="chan"/>
+    <end task="_task_buttonListener_6" type="chan"/>
+  </ends>
+  <name>c_buttons</name>
+</connection>
+<connection>
+  <ends>
+    <end task="_task_distributor_5" type="chan"/>
+    <end task="_task_pauseController_7" type="chan"/>
+  </ends>
+  <name>c_stop</name>
+</connection>
+<connection>
+  <ends>
+    <end task="_task_buttonListener_6" type="chan"/>
+    <end task="_task_pauseController_7" type="chan"/>
+  </ends>
+  <name>c_pauseLink</name>
+</connection>
+</taskgraph>

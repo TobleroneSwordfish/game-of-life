@@ -8,21 +8,19 @@
 #include "pgmIO.h"
 #include "i2c.h"
 
-#define  IMHT 1024                  //image height
-#define  IMWD 1024                  //image width
-#define GENERATE 1 //should the grid be generated or read in
-#define PACKSIZE 64
-#define ROW_LENGTH (IMWD/PACKSIZE) + (IMWD % PACKSIZE != 0)
+#define  IMHT 64                  //image height
+#define  IMWD 64                  //image width
+#define GENERATE 0 //should the grid be generated or read in
+#define ROW_LENGTH (IMWD/32) + (IMWD % 32 != 0)
 #define WORKERS 8
 #define MAXROUNDS 100
-#define infname "512x512.pgm"     //put your input image path here
+#define infname "64test.pgm"     //put your input image path here
 #define outfname "testout.pgm" //put your output image path here
-#define ROUNDOUT -1
-#define ALIVERATIO 0.6
+#define ROUNDOUT 1
+#define ALIVERATIO 0.4
 #define LOWRANDBOUND RAND_MAX*ALIVERATIO
 
 typedef unsigned char uchar;      //using uchar as shorthand
-typedef uint64_t packType;
 
 on tile[0]: port p_scl = XS1_PORT_1E;         //interface ports to orientation
 on tile[0]: port p_sda = XS1_PORT_1F;
@@ -152,9 +150,9 @@ void DataInStream(chanend c_out)
 #define ded (uchar)0
 
 //TODO replace with macro or inline, not sure if inline is the same speed
-packType addBitAtIndex(packType num, unsigned int index)
+uint32_t addBitAtIndex(uint32_t num, unsigned int index)
 {
-    return num | ((packType)1 << index);
+    return num | ((uint32_t)1 << index);
 }
 
 //takes the timer values and interval the timer is running on and returns the most accurate approximation in seconds
@@ -174,32 +172,32 @@ int getNextWorker(int w)
 //returns the number of bits that should be read from the next integer at position n
 int getIntSize(int n)
 {
-    if (IMWD-n*PACKSIZE>PACKSIZE){
-        return PACKSIZE;
+    if (IMWD-n*32>32){
+        return 32;
     }
-    else return IMWD-n*PACKSIZE; //what does this even do?
+    else return IMWD-n*32; //what does this even do?
 }
 
-void readRow(chanend c_in, packType row[ROW_LENGTH])
+void readRow(chanend c_in, uint32_t row[ROW_LENGTH])
 {
     uchar val;
     for (int i = 0; i < ROW_LENGTH; i++)
     {
-        packType num = 0;
+        uint32_t num = 0;
         //read in from file
-        for( int x = 0; x < PACKSIZE; x++ ) { //go through each pixel per line teehee
+        for( int x = 0; x < 32; x++ ) { //go through each pixel per line teehee
             c_in :> val;                    //read the pixel value
             //add a bit to the integer at the index
             if (!val == 0)
             {
-                num = addBitAtIndex(num, x % PACKSIZE);
+                num = addBitAtIndex(num, x % 32);
             }
         }
         row[i] = num;
     }
 }
 
-void sendRow(chanend c_out, packType row[ROW_LENGTH])
+void sendRow(chanend c_out, uint32_t row[ROW_LENGTH])
 {
     for (int i = 0; i < ROW_LENGTH; i++)
     {
@@ -213,12 +211,12 @@ void readImage(chanend wcs[WORKERS], chanend c_in)
     //yes
     //got a pai
     //some code
-    packType firstWorker [IMHT/WORKERS + 1][ROW_LENGTH];
+    uint32_t firstWorker [IMHT/WORKERS + 1][ROW_LENGTH];
       for (int r = 0; r < IMHT/WORKERS + 1; r++)
       {
           readRow(c_in, firstWorker[r]);
       }
-      packType row[ROW_LENGTH];
+      uint32_t row[ROW_LENGTH];
       //send last processing rows of first worker to next worker
       sendRow(wcs[1], firstWorker[IMHT/WORKERS-1]);
       sendRow(wcs[1], firstWorker[IMHT/WORKERS]);
@@ -263,8 +261,8 @@ void generateImage(chanend wcs[WORKERS], chanend c_timer)
               //generate each integer in the row
               for (int i = 0; i < ROW_LENGTH; i++)
               {
-                  packType value=0;
-                  for (int x=0; x<PACKSIZE;x++){
+                  uint32_t value=0;
+                  for (int x=0; x<32;x++){
                       if (rand()<LOWRANDBOUND){
                           value=addBitAtIndex(value,x);
                       }
@@ -292,7 +290,6 @@ void distributor(chanend c_in, chanend c_out, chanend c_timer, chanend wcs[WORKE
   {
       c_buttons :> r;
   }
-
   //Read in and do something with your image values.
   printf( "Reading image...\n" );
   c_leds <: (uchar)4;
@@ -327,13 +324,13 @@ void distributor(chanend c_in, chanend c_out, chanend c_timer, chanend wcs[WORKE
       //count the number of workers that have replied to the distributor so far
       int workersReplied = 0;
       //first row received is 'stored at w, second row at w + WORKERS
-      packType edgeRows[WORKERS * 2][ROW_LENGTH];
+      uint32_t edgeRows[WORKERS * 2][ROW_LENGTH];
       while (workersReplied < WORKERS)
       {
           select
           {
               //read in any worker that can send
-              case wcs[int w] :> packType x:
+              case wcs[int w] :> uint32_t x:
                   workersReplied++;
                   edgeRows[w][0] = x;
                   for (int i = 1; i < ROW_LENGTH; i++)
@@ -394,10 +391,10 @@ void distributor(chanend c_in, chanend c_out, chanend c_timer, chanend wcs[WORKE
                   //for each row
                   for (int r = 0; r < rows; r++)
                   {
-                      //for each packType in the row
+                      //for each uint32_t in the row
                       for (int n = 0; n < ROW_LENGTH; n++)
                       {
-                          packType x;
+                          uint32_t x;
                           wcs[w] :> x; //read in from worker channel
                           uchar ffs = getIntSize(n);
                           for (int i = 0; i < ffs; i++)
@@ -460,13 +457,13 @@ void distributor(chanend c_in, chanend c_out, chanend c_timer, chanend wcs[WORKE
 }
 
 //check if cell at index is alive
-int checkAlive(int r, int i, packType rows[IMWD/WORKERS + 2][ROW_LENGTH])
+int checkAlive(int r, int i, uint32_t rows[IMWD/WORKERS + 2][ROW_LENGTH])
 {
-    return rows[r][i / PACKSIZE] & (1 << (i % PACKSIZE));
+    return rows[r][i / 32] & (1 << (i % 32));
 }
 
 //evaluate if cell at row r, index i should be alive next round
-uchar evaluate(int r, int i, packType rows[IMWD/WORKERS + 2][ROW_LENGTH])
+uchar evaluate(int r, int i, uint32_t rows[IMWD/WORKERS + 2][ROW_LENGTH])
 {
     int neighbors = 0;
     //go over neighboring rows
@@ -504,7 +501,7 @@ uchar evaluate(int r, int i, packType rows[IMWD/WORKERS + 2][ROW_LENGTH])
 
 void Worker(chanend channel, int id)
 {
-    packType rows[IMWD/WORKERS + 2][ROW_LENGTH];
+    uint32_t rows[IMWD/WORKERS + 2][ROW_LENGTH];
     //get intial grid values
     for (int r = 0; r < IMWD/WORKERS + 2; r++)
     {
@@ -525,37 +522,50 @@ void Worker(chanend channel, int id)
     // "add the fucking shit"
     //okay
     //ιθθρ brother
+    uint32_t rowBuffer[2][ROW_LENGTH];
+    uchar currentRow = 0;
     while (1)
     {
-        //initialize new array
-        packType rowsNew[IMWD/WORKERS + 2][ROW_LENGTH];
-        for (int y = 0; y < IMWD/WORKERS + 2; y++)
-        {
-            for (int x = 0; x < ROW_LENGTH; x++)
-            {
-                rowsNew[y][x] = 0;
-            }
-        }
         //each row
         for (int r = 1; r <= IMWD/WORKERS; r++)
         {
-            //each cell
-            for (int i = 0; i < IMWD; i++)
+            //each uint32_t
+            for (int n = 0; n < ROW_LENGTH; n++)
             {
-                if (evaluate(r, i, rows))
+                uint32_t num = 0;
+                //each cell in ints
+                for (int i = 0; i < 32; i++)
                 {
-                    rowsNew[r][i / PACKSIZE] = addBitAtIndex(rowsNew[r][i / PACKSIZE], i % PACKSIZE);
+                    if (evaluate(r, i + n * 32, rows))
+                    {
+                        num = addBitAtIndex(num, i % 32);
+                    }
+                }
+                rowBuffer[currentRow][n] = num;
+            }
+            if (r != 1) //not first row
+            {
+                //write row buffer back to rows
+                for (int i = 0; i < ROW_LENGTH; i++)
+                {
+                    rows[r - 1][i] = rowBuffer[!currentRow][i];
                 }
             }
+            currentRow = !currentRow;
         }
-        //clone array
-        for (int y = 0; y < IMWD/WORKERS + 2; y++)
+        //dump last row
+        for (int i = 0; i < ROW_LENGTH; i++)
         {
-            for (int x = 0; x < ROW_LENGTH; x++)
-            {
-                rows[y][x] = rowsNew[y][x];
-            }
+            rows[IMWD/WORKERS][i] = rowBuffer[!currentRow][i];
         }
+//        //clone array
+//        for (int y = 0; y < IMWD/WORKERS + 2; y++)
+//        {
+//            for (int x = 0; x < ROW_LENGTH; x++)
+//            {
+//                rows[y][x] = rowsNew[y][x];
+//            }
+//        }
         //send out 1st and (n-1)th rows
         for (int i = 0; i < ROW_LENGTH; i++)
         {
@@ -595,7 +605,7 @@ void Worker(chanend channel, int id)
             {
                 for (int n = 0; n < ROW_LENGTH; n++)
                 {
-                    packType x = rows[r][n];
+                    uint32_t x = rows[r][n];
                     for (int i = 0; i < getIntSize(n); i++)
                     {
                         if (x % 2) //TODO - change to checkalive
@@ -754,19 +764,17 @@ par {
     on tile[0].core[0]: Timer(c_timer); //timer thread to keep track of a sensible real world time
     on tile[0].core[0]: LEDController(c_leds); //basically just gives us toggleable LEDs, probably more trouble than is worth
     on tile[0]: i2c_master(i2c, 1, p_scl, p_sda, 10);   //server thread providing orientation data
-    on tile[0]: orientation(i2c[0], c_accel);        //client thread reading orientation data
+    on tile[1]: orientation(i2c[0], c_accel);        //client thread reading orientation data
     on tile[0]: { //we can run these sequentially as the datainstream only needs to run once
         DataInStream(c_inIO);
         DataOutStream(c_outIO);
     }
-    on tile[0]: distributor(c_inIO, c_outIO, c_timer, workerChans, c_leds, c_buttons, c_stop);//thread to coordinate work on image
+    on tile[1]: distributor(c_inIO, c_outIO, c_timer, workerChans, c_leds, c_buttons, c_stop);//thread to coordinate work on image
     on tile[0]: buttonListener(buttons, c_buttons, c_pauseLink); //listens to buttons, vat vanderful musik zey make
-    on tile[0]: pauseController(c_pauseLink, c_accel, c_stop); //distributes pause value
-    //on tile[0]: test();
-    on tile[0]: Worker(workerChans[0], 0);
-    par (int i = 1; i < WORKERS; i++) //start workers in order, giving them IDs for debug purposes
+    on tile[1]: pauseController(c_pauseLink, c_accel, c_stop); //distributes pause value
+    par (int i = 0; i < WORKERS; i++) //start workers in order, giving them IDs for debug purposes
     {
-        on tile[1]: Worker(workerChans[i], i);
+        on tile[i % 2]: Worker(workerChans[i], i);
     }
   }
 

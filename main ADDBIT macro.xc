@@ -11,18 +11,16 @@
 #define  IMHT 1024                  //image height
 #define  IMWD 1024                  //image width
 #define GENERATE 1 //should the grid be generated or read in
-#define PACKSIZE 64
-#define ROW_LENGTH (IMWD/PACKSIZE) + (IMWD % PACKSIZE != 0)
+#define ROW_LENGTH (IMWD/32) + (IMWD % 32 != 0)
 #define WORKERS 8
 #define MAXROUNDS 100
-#define infname "512x512.pgm"     //put your input image path here
+#define infname "64test.pgm"     //put your input image path here
 #define outfname "testout.pgm" //put your output image path here
 #define ROUNDOUT -1
-#define ALIVERATIO 0.6
+#define ALIVERATIO 0.4
 #define LOWRANDBOUND RAND_MAX*ALIVERATIO
 
 typedef unsigned char uchar;      //using uchar as shorthand
-typedef uint64_t packType;
 
 on tile[0]: port p_scl = XS1_PORT_1E;         //interface ports to orientation
 on tile[0]: port p_sda = XS1_PORT_1F;
@@ -152,10 +150,12 @@ void DataInStream(chanend c_out)
 #define ded (uchar)0
 
 //TODO replace with macro or inline, not sure if inline is the same speed
-packType addBitAtIndex(packType num, unsigned int index)
-{
-    return num | ((packType)1 << index);
-}
+//uint32_t ADDBIT(uint32_t num, unsigned int index)
+//{
+//    return num | ((uint32_t)1 << index);
+//}
+
+#define ADDBIT(x, index) ((x) | (1 << index))
 
 //takes the timer values and interval the timer is running on and returns the most accurate approximation in seconds
 double timeInSeconds(uint32_t counter, uint32_t timerValue, uint32_t interval)
@@ -174,32 +174,32 @@ int getNextWorker(int w)
 //returns the number of bits that should be read from the next integer at position n
 int getIntSize(int n)
 {
-    if (IMWD-n*PACKSIZE>PACKSIZE){
-        return PACKSIZE;
+    if (IMWD-n*32>32){
+        return 32;
     }
-    else return IMWD-n*PACKSIZE; //what does this even do?
+    else return IMWD-n*32; //what does this even do?
 }
 
-void readRow(chanend c_in, packType row[ROW_LENGTH])
+void readRow(chanend c_in, uint32_t row[ROW_LENGTH])
 {
     uchar val;
     for (int i = 0; i < ROW_LENGTH; i++)
     {
-        packType num = 0;
+        uint32_t num = 0;
         //read in from file
-        for( int x = 0; x < PACKSIZE; x++ ) { //go through each pixel per line teehee
+        for( int x = 0; x < 32; x++ ) { //go through each pixel per line teehee
             c_in :> val;                    //read the pixel value
             //add a bit to the integer at the index
             if (!val == 0)
             {
-                num = addBitAtIndex(num, x % PACKSIZE);
+                num = ADDBIT(num, x % 32);
             }
         }
         row[i] = num;
     }
 }
 
-void sendRow(chanend c_out, packType row[ROW_LENGTH])
+void sendRow(chanend c_out, uint32_t row[ROW_LENGTH])
 {
     for (int i = 0; i < ROW_LENGTH; i++)
     {
@@ -213,12 +213,12 @@ void readImage(chanend wcs[WORKERS], chanend c_in)
     //yes
     //got a pai
     //some code
-    packType firstWorker [IMHT/WORKERS + 1][ROW_LENGTH];
+    uint32_t firstWorker [IMHT/WORKERS + 1][ROW_LENGTH];
       for (int r = 0; r < IMHT/WORKERS + 1; r++)
       {
           readRow(c_in, firstWorker[r]);
       }
-      packType row[ROW_LENGTH];
+      uint32_t row[ROW_LENGTH];
       //send last processing rows of first worker to next worker
       sendRow(wcs[1], firstWorker[IMHT/WORKERS-1]);
       sendRow(wcs[1], firstWorker[IMHT/WORKERS]);
@@ -263,10 +263,10 @@ void generateImage(chanend wcs[WORKERS], chanend c_timer)
               //generate each integer in the row
               for (int i = 0; i < ROW_LENGTH; i++)
               {
-                  packType value=0;
-                  for (int x=0; x<PACKSIZE;x++){
+                  uint32_t value=0;
+                  for (int x=0; x<32;x++){
                       if (rand()<LOWRANDBOUND){
-                          value=addBitAtIndex(value,x);
+                          value=ADDBIT(value,x);
                       }
                   }
                   wcs[w]<: value;
@@ -327,13 +327,13 @@ void distributor(chanend c_in, chanend c_out, chanend c_timer, chanend wcs[WORKE
       //count the number of workers that have replied to the distributor so far
       int workersReplied = 0;
       //first row received is 'stored at w, second row at w + WORKERS
-      packType edgeRows[WORKERS * 2][ROW_LENGTH];
+      uint32_t edgeRows[WORKERS * 2][ROW_LENGTH];
       while (workersReplied < WORKERS)
       {
           select
           {
               //read in any worker that can send
-              case wcs[int w] :> packType x:
+              case wcs[int w] :> uint32_t x:
                   workersReplied++;
                   edgeRows[w][0] = x;
                   for (int i = 1; i < ROW_LENGTH; i++)
@@ -394,10 +394,10 @@ void distributor(chanend c_in, chanend c_out, chanend c_timer, chanend wcs[WORKE
                   //for each row
                   for (int r = 0; r < rows; r++)
                   {
-                      //for each packType in the row
+                      //for each uint32_t in the row
                       for (int n = 0; n < ROW_LENGTH; n++)
                       {
-                          packType x;
+                          uint32_t x;
                           wcs[w] :> x; //read in from worker channel
                           uchar ffs = getIntSize(n);
                           for (int i = 0; i < ffs; i++)
@@ -460,13 +460,13 @@ void distributor(chanend c_in, chanend c_out, chanend c_timer, chanend wcs[WORKE
 }
 
 //check if cell at index is alive
-int checkAlive(int r, int i, packType rows[IMWD/WORKERS + 2][ROW_LENGTH])
+int checkAlive(int r, int i, uint32_t rows[IMWD/WORKERS + 2][ROW_LENGTH])
 {
-    return rows[r][i / PACKSIZE] & (1 << (i % PACKSIZE));
+    return rows[r][i / 32] & (1 << (i % 32));
 }
 
 //evaluate if cell at row r, index i should be alive next round
-uchar evaluate(int r, int i, packType rows[IMWD/WORKERS + 2][ROW_LENGTH])
+uchar evaluate(int r, int i, uint32_t rows[IMWD/WORKERS + 2][ROW_LENGTH])
 {
     int neighbors = 0;
     //go over neighboring rows
@@ -504,7 +504,7 @@ uchar evaluate(int r, int i, packType rows[IMWD/WORKERS + 2][ROW_LENGTH])
 
 void Worker(chanend channel, int id)
 {
-    packType rows[IMWD/WORKERS + 2][ROW_LENGTH];
+    uint32_t rows[IMWD/WORKERS + 2][ROW_LENGTH];
     //get intial grid values
     for (int r = 0; r < IMWD/WORKERS + 2; r++)
     {
@@ -528,12 +528,12 @@ void Worker(chanend channel, int id)
     while (1)
     {
         //initialize new array
-        packType rowsNew[IMWD/WORKERS + 2][ROW_LENGTH];
+        uint32_t rowsNew[IMWD/WORKERS + 2][ROW_LENGTH];
         for (int y = 0; y < IMWD/WORKERS + 2; y++)
         {
             for (int x = 0; x < ROW_LENGTH; x++)
             {
-                rowsNew[y][x] = 0;
+                rowsNew[y][x] = (uint32_t)0;
             }
         }
         //each row
@@ -544,7 +544,7 @@ void Worker(chanend channel, int id)
             {
                 if (evaluate(r, i, rows))
                 {
-                    rowsNew[r][i / PACKSIZE] = addBitAtIndex(rowsNew[r][i / PACKSIZE], i % PACKSIZE);
+                    rowsNew[r][i / 32] = ADDBIT(rowsNew[r][i / 32], i % 32);
                 }
             }
         }
@@ -595,7 +595,7 @@ void Worker(chanend channel, int id)
             {
                 for (int n = 0; n < ROW_LENGTH; n++)
                 {
-                    packType x = rows[r][n];
+                    uint32_t x = rows[r][n];
                     for (int i = 0; i < getIntSize(n); i++)
                     {
                         if (x % 2) //TODO - change to checkalive
@@ -733,9 +733,9 @@ void Timer(chanend c_timer)
 //{
 //    uint32_t n = 0;
 //    unsigned int index = 6;
-//    printf("bit inserted at %u = %u\n", index, n = addBitAtIndex(n, index));
+//    printf("bit inserted at %u = %u\n", index, n = ADDBIT(n, index));
 //    index = 17;
-//    printf("bit inserted at %u = %u\n", index, n = addBitAtIndex(n, index));
+//    printf("bit inserted at %u = %u\n", index, n = ADDBIT(n, index));
 //    printf("\n");
 //}
 

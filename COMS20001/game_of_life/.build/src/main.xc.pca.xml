@@ -110,7 +110,6 @@
 <fDef name="tgammal" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
 <fDef name="timeInSeconds" global="true" noreturn="false" doNotSpecialize="false" numParams="3"/>
 <fDef name="truncl" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
-<fDef name="wakeUp" global="true" noreturn="false" doNotSpecialize="false" numParams="2"/>
 <fDef name="write" global="true" interface="i2c_master_async_if" noreturn="false" doNotSpecialize="false" numParams="4"/>
 <fDef name="write" global="true" interface="i2c_master_if" noreturn="false" doNotSpecialize="false" numParams="5"/>
 <fDef name="write_reg" global="true" interface="i2c_master_if" noreturn="false" doNotSpecialize="true" numParams="4"/>
@@ -1095,12 +1094,12 @@
   </arg>
   <arg num="1">
     <values>
-      <value type="intval"><intval isSigned="true" val="64"/></value>
+      <value type="intval"><intval isSigned="true" val="1024"/></value>
     </values>
   </arg>
   <arg num="2">
     <values>
-      <value type="intval"><intval isSigned="true" val="64"/></value>
+      <value type="intval"><intval isSigned="true" val="1024"/></value>
     </values>
   </arg>
 </fCall>
@@ -1124,7 +1123,7 @@
   </arg>
   <arg num="1">
     <values>
-      <value type="intval"><intval isSigned="true" val="64"/></value>
+      <value type="intval"><intval isSigned="true" val="1024"/></value>
     </values>
   </arg>
 </fCall>
@@ -1315,12 +1314,12 @@
   </arg>
   <arg num="1">
     <values>
-      <value type="intval"><intval isSigned="true" val="64"/></value>
+      <value type="intval"><intval isSigned="true" val="1024"/></value>
     </values>
   </arg>
   <arg num="2">
     <values>
-      <value type="intval"><intval isSigned="true" val="64"/></value>
+      <value type="intval"><intval isSigned="true" val="1024"/></value>
     </values>
   </arg>
 </fCall>
@@ -1539,30 +1538,6 @@
     </values>
   </arg>
 </fCall>
-<fCall name="wakeUp" global="true" numArgs="2">
-  <arg num="0">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-  <arg num="1">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-</fCall>
-<fCall name="wakeUp" global="true" numArgs="2">
-  <arg num="0">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-  <arg num="1">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-</fCall>
 <fCall name="getIntSize" global="true" numArgs="1">
   <arg num="0">
     <values>
@@ -1602,12 +1577,12 @@
   </arg>
   <arg num="1">
     <values>
-      <value type="intval"><intval isSigned="true" val="64"/></value>
+      <value type="intval"><intval isSigned="true" val="1024"/></value>
     </values>
   </arg>
   <arg num="2">
     <values>
-      <value type="intval"><intval isSigned="true" val="64"/></value>
+      <value type="intval"><intval isSigned="true" val="1024"/></value>
     </values>
   </arg>
 </fCall>
@@ -1631,7 +1606,7 @@
   </arg>
   <arg num="1">
     <values>
-      <value type="intval"><intval isSigned="true" val="64"/></value>
+      <value type="intval"><intval isSigned="true" val="1024"/></value>
     </values>
   </arg>
 </fCall>
@@ -1905,7 +1880,7 @@
     </values>
   </arg>
 </fCall>
-<fCall name="Worker" global="true" numArgs="2" impId="9">
+<fCall name="Worker" global="true" numArgs="2" impId="0">
   <arg num="0">
     <values>
       <value type="unknown"/>
