@@ -42,3 +42,32 @@ Processing complete in time: 55.772685
 HMMM
 
 55.7 dark
+
+Generation using rand() strategy:
+1024:
+0.325387
+0.325388
+0.325388
+
+64:
+0.001564
+0.001564
+
+128:
+0.005647
+
+512:
+0.082707
+
+Number of alive cells on a 1024 board:
+Starting with
+10%: 12864
+20%: 22944
+30%: 25984
+40%: 25952
+50%: 23552
+60%: 22720
+70%:  8032
+80%:
+90%:
+100%:

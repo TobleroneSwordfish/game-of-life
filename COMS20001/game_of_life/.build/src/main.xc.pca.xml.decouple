@@ -11,7 +11,6 @@
 <fDef name="ack_write_request" global="true" interface="i2c_slave_callback_if" noreturn="false" doNotSpecialize="false" numParams="0"/>
 <fDef name="acoshl" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
 <fDef name="acosl" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
-<fDef name="addBitAtIndex" global="true" noreturn="false" doNotSpecialize="false" numParams="2"/>
 <fDef name="asinhl" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
 <fDef name="asinl" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
 <fDef name="atan2l" global="true" noreturn="false" doNotSpecialize="true" numParams="2"/>
@@ -20,7 +19,6 @@
 <fDef name="buttonListener" global="true" noreturn="true" doNotSpecialize="false" numParams="3"/>
 <fDef name="cbrtl" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
 <fDef name="ceill" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
-<fDef name="checkAlive" global="true" noreturn="false" doNotSpecialize="false" numParams="3"/>
 <fDef name="copysignl" global="true" noreturn="false" doNotSpecialize="true" numParams="2"/>
 <fDef name="coshl" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
 <fDef name="cosl" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
@@ -110,6 +108,7 @@
 <fDef name="tgammal" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
 <fDef name="timeInSeconds" global="true" noreturn="false" doNotSpecialize="false" numParams="3"/>
 <fDef name="truncl" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
+<fDef name="wakeUp" global="true" noreturn="false" doNotSpecialize="false" numParams="2"/>
 <fDef name="write" global="true" interface="i2c_master_async_if" noreturn="false" doNotSpecialize="false" numParams="4"/>
 <fDef name="write" global="true" interface="i2c_master_if" noreturn="false" doNotSpecialize="false" numParams="5"/>
 <fDef name="write_reg" global="true" interface="i2c_master_if" noreturn="false" doNotSpecialize="true" numParams="4"/>
@@ -1136,18 +1135,6 @@
     </values>
   </arg>
 </fCall>
-<fCall name="addBitAtIndex" global="true" numArgs="2">
-  <arg num="0">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-  <arg num="1">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-</fCall>
 <fCall name="readRow" global="true" numArgs="2">
   <arg num="0">
     <passThroughArg param="1" caller="readImage" global="true"/>
@@ -1294,18 +1281,6 @@
 </fCall>
 <fCall name="rand" global="true" numArgs="0">
 </fCall>
-<fCall name="addBitAtIndex" global="true" numArgs="2">
-  <arg num="0">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-  <arg num="1">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-</fCall>
 <fCall name="printf" global="true" numArgs="3">
   <arg num="0">
     <values>
@@ -1329,6 +1304,20 @@
       <value type="unknown"/>
     </values>
   </arg>
+</fCall>
+<fCall name="printf" global="true" numArgs="2">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+  <arg num="1">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+</fCall>
+<fCall name="rand" global="true" numArgs="0">
 </fCall>
 <fCall name="printf" global="true" numArgs="1">
   <arg num="0">
@@ -1358,6 +1347,52 @@
   <arg num="1">
     <passThroughArg param="0" caller="distributor" global="true"/>
     <values>
+    </values>
+  </arg>
+</fCall>
+<fCall name="printf" global="true" numArgs="2">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+  <arg num="1">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+</fCall>
+<fCall name="timeInSeconds" global="true" numArgs="3">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+  <arg num="1">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+  <arg num="2">
+    <values>
+      <value type="intval"><intval isSigned="true" val="10000000"/></value>
+    </values>
+  </arg>
+</fCall>
+<fCall name="timeInSeconds" global="true" numArgs="3">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+  <arg num="1">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+  <arg num="2">
+    <values>
+      <value type="intval"><intval isSigned="true" val="10000000"/></value>
     </values>
   </arg>
 </fCall>
@@ -1410,13 +1445,6 @@
     </values>
   </arg>
   <arg num="1">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-</fCall>
-<fCall name="printf" global="true" numArgs="1">
-  <arg num="0">
     <values>
       <value type="unknown"/>
     </values>
@@ -1475,40 +1503,6 @@
     </values>
   </arg>
 </fCall>
-<fCall name="checkAlive" global="true" numArgs="3">
-  <arg num="0">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-  <arg num="1">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-  <arg num="2">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-</fCall>
-<fCall name="checkAlive" global="true" numArgs="3">
-  <arg num="0">
-    <passThroughArg param="0" caller="evaluate" global="true"/>
-    <values>
-    </values>
-  </arg>
-  <arg num="1">
-    <passThroughArg param="1" caller="evaluate" global="true"/>
-    <values>
-    </values>
-  </arg>
-  <arg num="2">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-</fCall>
 <fCall name="evaluate" global="true" numArgs="3">
   <arg num="0">
     <values>
@@ -1526,7 +1520,19 @@
     </values>
   </arg>
 </fCall>
-<fCall name="addBitAtIndex" global="true" numArgs="2">
+<fCall name="wakeUp" global="true" numArgs="2">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+  <arg num="1">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+</fCall>
+<fCall name="wakeUp" global="true" numArgs="2">
   <arg num="0">
     <values>
       <value type="unknown"/>
@@ -1737,17 +1743,34 @@
     </values>
   </arg>
 </fCall>
-<fCall name="LEDController" global="true" numArgs="1" impId="2">
+<fCall name="pauseController" global="true" numArgs="3" impId="2">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+  <arg num="1">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+  <arg num="2">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+</fCall>
+<fCall name="LEDController" global="true" numArgs="1" impId="3">
   <arg num="0">
     <values>
       <value type="unknown"/>
     </values>
   </arg>
 </fCall>
-<fCall name="i2c_master" global="true" numArgs="5" impId="3">
+<fCall name="i2c_master" global="true" numArgs="5" impId="4">
   <arg num="0">
     <values>
-      <value type="interface"><interfaceInfo index="0" type="dist" func="i2c_master" global="true" impUnit="../src/main.xc" impId="3" param="0"/></value>
+      <value type="interface"><interfaceInfo index="0" type="chan" isYielding="false"/></value>
     </values>
   </arg>
   <arg num="1">
@@ -1771,10 +1794,10 @@
     </values>
   </arg>
 </fCall>
-<fCall name="orientation" global="true" numArgs="2" impId="4">
+<fCall name="orientation" global="true" numArgs="2" impId="5">
   <arg num="0">
     <values>
-      <value type="interface"><interfaceInfo index="0" type="dist" func="i2c_master" global="true" impUnit="../src/main.xc" impId="3" param="0"/></value>
+      <value type="interface"><interfaceInfo index="0" type="chan" isYielding="false"/></value>
     </values>
   </arg>
   <arg num="1">
@@ -1797,7 +1820,7 @@
     </values>
   </arg>
 </fCall>
-<fCall name="distributor" global="true" numArgs="7" impId="5">
+<fCall name="distributor" global="true" numArgs="7" impId="6">
   <arg num="0">
     <values>
       <value type="unknown"/>
@@ -1834,7 +1857,7 @@
     </values>
   </arg>
 </fCall>
-<fCall name="buttonListener" global="true" numArgs="3" impId="6">
+<fCall name="buttonListener" global="true" numArgs="3" impId="7">
   <arg num="0">
     <values>
       <value type="unknown"/>
@@ -1851,24 +1874,7 @@
     </values>
   </arg>
 </fCall>
-<fCall name="pauseController" global="true" numArgs="3" impId="7">
-  <arg num="0">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-  <arg num="1">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-  <arg num="2">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-</fCall>
-<fCall name="Worker" global="true" numArgs="2" impId="8">
+<fCall name="Worker" global="true" numArgs="2" impId="0">
   <arg num="0">
     <values>
       <value type="unknown"/>

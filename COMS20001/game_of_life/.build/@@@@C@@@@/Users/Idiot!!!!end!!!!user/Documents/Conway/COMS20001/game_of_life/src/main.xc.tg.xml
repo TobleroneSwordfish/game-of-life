@@ -319,10 +319,6 @@
   <inFunction>DataInStream</inFunction>
 </task>
 <task>
-  <name>addBitAtIndex</name>
-  <inFunction>addBitAtIndex</inFunction>
-</task>
-<task>
   <name>timeInSeconds</name>
   <inFunction>timeInSeconds</inFunction>
 </task>
@@ -360,12 +356,12 @@
   <endOfSeqCalledFunction>printf</endOfSeqCalledFunction>
 </task>
 <task>
-  <name>checkAlive</name>
-  <inFunction>checkAlive</inFunction>
-</task>
-<task>
   <name>evaluate</name>
   <inFunction>evaluate</inFunction>
+</task>
+<task>
+  <name>wakeUp</name>
+  <inFunction>wakeUp</inFunction>
 </task>
 <task>
   <name>Worker</name>
@@ -397,7 +393,16 @@
   <inPar/>
 </task>
 <task>
-  <name>_task_LEDController_1</name>
+  <name>_task_pauseController_1</name>
+  <inFunction>main</inFunction>
+  <parent>main</parent>
+  <calledFunction>pauseController</calledFunction>
+  <tile>tile[0]</tile>
+  <core>u0</core>
+  <inPar/>
+</task>
+<task>
+  <name>_task_LEDController_2</name>
   <inFunction>main</inFunction>
   <parent>main</parent>
   <calledFunction>LEDController</calledFunction>
@@ -406,79 +411,70 @@
   <inPar/>
 </task>
 <task>
-  <name>_task_i2c_master_2</name>
+  <name>_task_i2c_master_3</name>
   <inFunction>main</inFunction>
   <parent>main</parent>
   <calledFunction>i2c_master</calledFunction>
-  <tile>tile[0]</tile>
-  <distributed/>
-  <inPar/>
-</task>
-<task>
-  <name>_task_orientation_3</name>
-  <inFunction>main</inFunction>
-  <parent>main</parent>
-  <calledFunction>orientation</calledFunction>
   <tile>tile[0]</tile>
   <core>4</core>
   <inPar/>
 </task>
 <task>
-  <name>_task_DataOutStream_4</name>
+  <name>_task_orientation_4</name>
   <inFunction>main</inFunction>
   <parent>main</parent>
-  <endOfSeqCalledFunction>DataOutStream</endOfSeqCalledFunction>
-  <tile>tile[0]</tile>
+  <calledFunction>orientation</calledFunction>
+  <tile>tile[1]</tile>
   <core>5</core>
   <inPar/>
 </task>
 <task>
-  <name>_task_distributor_5</name>
+  <name>_task_DataOutStream_5</name>
   <inFunction>main</inFunction>
   <parent>main</parent>
-  <calledFunction>distributor</calledFunction>
-  <tile>tile[0]</tile>
+  <endOfSeqCalledFunction>DataOutStream</endOfSeqCalledFunction>
+  <tile>tile[1]</tile>
   <core>6</core>
   <inPar/>
 </task>
 <task>
-  <name>_task_buttonListener_6</name>
+  <name>_task_distributor_6</name>
   <inFunction>main</inFunction>
   <parent>main</parent>
-  <calledFunction>buttonListener</calledFunction>
-  <tile>tile[0]</tile>
+  <calledFunction>distributor</calledFunction>
+  <tile>tile[1]</tile>
   <core>7</core>
   <inPar/>
 </task>
 <task>
-  <name>_task_pauseController_7</name>
+  <name>_task_buttonListener_7</name>
   <inFunction>main</inFunction>
   <parent>main</parent>
-  <calledFunction>pauseController</calledFunction>
+  <calledFunction>buttonListener</calledFunction>
   <tile>tile[0]</tile>
   <core>8</core>
   <inPar/>
 </task>
 <task>
-  <name>_task_Worker_8</name>
+  <name>_task_8</name>
   <inFunction>main</inFunction>
   <parent>main</parent>
-  <calledFunction>Worker</calledFunction>
-  <tile>tile[0]</tile>
   <core>9</core>
   <inPar/>
 </task>
 <task>
-  <name>_task_9</name>
+  <name>_task_Worker_9</name>
   <inFunction>main</inFunction>
-  <parent>main</parent>
+  <parent>_task_8</parent>
+  <calledFunction>Worker</calledFunction>
+  <tile>tile[0]</tile>
   <core>10</core>
   <inPar/>
 </task>
 <task>
   <name>_task_Worker_10</name>
   <inFunction>main</inFunction>
-  <parent>_task_9</parent>
+  <parent>_task_8</parent>
   <calledFunction>Worker</calledFunction>
   <tile>tile[1]</tile>
   <core>11</core>
@@ -487,16 +483,16 @@
 <task>
   <name>_task_Worker_11</name>
   <inFunction>main</inFunction>
-  <parent>_task_9</parent>
+  <parent>_task_8</parent>
   <calledFunction>Worker</calledFunction>
-  <tile>tile[1]</tile>
+  <tile>tile[0]</tile>
   <core>12</core>
   <inPar/>
 </task>
 <task>
   <name>_task_Worker_12</name>
   <inFunction>main</inFunction>
-  <parent>_task_9</parent>
+  <parent>_task_8</parent>
   <calledFunction>Worker</calledFunction>
   <tile>tile[1]</tile>
   <core>13</core>
@@ -505,16 +501,16 @@
 <task>
   <name>_task_Worker_13</name>
   <inFunction>main</inFunction>
-  <parent>_task_9</parent>
+  <parent>_task_8</parent>
   <calledFunction>Worker</calledFunction>
-  <tile>tile[1]</tile>
+  <tile>tile[0]</tile>
   <core>14</core>
   <inPar/>
 </task>
 <task>
   <name>_task_Worker_14</name>
   <inFunction>main</inFunction>
-  <parent>_task_9</parent>
+  <parent>_task_8</parent>
   <calledFunction>Worker</calledFunction>
   <tile>tile[1]</tile>
   <core>15</core>
@@ -523,16 +519,16 @@
 <task>
   <name>_task_Worker_15</name>
   <inFunction>main</inFunction>
-  <parent>_task_9</parent>
+  <parent>_task_8</parent>
   <calledFunction>Worker</calledFunction>
-  <tile>tile[1]</tile>
+  <tile>tile[0]</tile>
   <core>16</core>
   <inPar/>
 </task>
 <task>
   <name>_task_Worker_16</name>
   <inFunction>main</inFunction>
-  <parent>_task_9</parent>
+  <parent>_task_8</parent>
   <calledFunction>Worker</calledFunction>
   <tile>tile[1]</tile>
   <core>17</core>
@@ -541,21 +537,42 @@
 <connection>
   <ends>
     <end task="_task_Timer_0" type="chan"/>
-    <end task="_task_distributor_5" type="chan"/>
+    <end task="_task_distributor_6" type="chan"/>
   </ends>
   <name>c_timer</name>
 </connection>
 <connection>
   <ends>
-    <end task="_task_LEDController_1" type="chan"/>
-    <end task="_task_distributor_5" type="chan"/>
+    <end task="_task_pauseController_1" type="chan"/>
+    <end task="_task_buttonListener_7" type="chan"/>
+  </ends>
+  <name>c_pauseLink</name>
+</connection>
+<connection>
+  <ends>
+    <end task="_task_pauseController_1" type="chan"/>
+    <end task="_task_orientation_4" type="chan"/>
+  </ends>
+  <name>c_accel</name>
+</connection>
+<connection>
+  <ends>
+    <end task="_task_pauseController_1" type="chan"/>
+    <end task="_task_distributor_6" type="chan"/>
+  </ends>
+  <name>c_stop</name>
+</connection>
+<connection>
+  <ends>
+    <end task="_task_LEDController_2" type="chan"/>
+    <end task="_task_distributor_6" type="chan"/>
   </ends>
   <name>c_leds</name>
 </connection>
 <connection>
   <ends>
-    <end task="_task_i2c_master_2" type="server"/>
-    <end task="_task_orientation_3" type="client"/>
+    <end task="_task_i2c_master_3" type="server"/>
+    <end task="_task_orientation_4" type="client"/>
   </ends>
     <index>0</index>
   <name>i2c</name>
@@ -563,36 +580,29 @@
 </connection>
 <connection>
   <ends>
-    <end task="_task_orientation_3" type="chan"/>
-    <end task="_task_pauseController_7" type="chan"/>
-  </ends>
-  <name>c_accel</name>
-</connection>
-<connection>
-  <ends>
-    <end task="_task_DataOutStream_4" type="chan"/>
-    <end task="_task_distributor_5" type="chan"/>
+    <end task="_task_DataOutStream_5" type="chan"/>
+    <end task="_task_distributor_6" type="chan"/>
   </ends>
   <name>c_inIO</name>
 </connection>
 <connection>
   <ends>
-    <end task="_task_DataOutStream_4" type="chan"/>
-    <end task="_task_distributor_5" type="chan"/>
+    <end task="_task_DataOutStream_5" type="chan"/>
+    <end task="_task_distributor_6" type="chan"/>
   </ends>
   <name>c_outIO</name>
 </connection>
 <connection>
   <ends>
-    <end task="_task_distributor_5" type="chan"/>
-    <end task="_task_Worker_8" type="chan"/>
+    <end task="_task_distributor_6" type="chan"/>
+    <end task="_task_Worker_9" type="chan"/>
   </ends>
     <index>0</index>
   <name>workerChans</name>
 </connection>
 <connection>
   <ends>
-    <end task="_task_distributor_5" type="chan"/>
+    <end task="_task_distributor_6" type="chan"/>
     <end task="_task_Worker_10" type="chan"/>
   </ends>
     <index>1</index>
@@ -600,7 +610,7 @@
 </connection>
 <connection>
   <ends>
-    <end task="_task_distributor_5" type="chan"/>
+    <end task="_task_distributor_6" type="chan"/>
     <end task="_task_Worker_11" type="chan"/>
   </ends>
     <index>2</index>
@@ -608,7 +618,7 @@
 </connection>
 <connection>
   <ends>
-    <end task="_task_distributor_5" type="chan"/>
+    <end task="_task_distributor_6" type="chan"/>
     <end task="_task_Worker_12" type="chan"/>
   </ends>
     <index>3</index>
@@ -616,7 +626,7 @@
 </connection>
 <connection>
   <ends>
-    <end task="_task_distributor_5" type="chan"/>
+    <end task="_task_distributor_6" type="chan"/>
     <end task="_task_Worker_13" type="chan"/>
   </ends>
     <index>4</index>
@@ -624,7 +634,7 @@
 </connection>
 <connection>
   <ends>
-    <end task="_task_distributor_5" type="chan"/>
+    <end task="_task_distributor_6" type="chan"/>
     <end task="_task_Worker_14" type="chan"/>
   </ends>
     <index>5</index>
@@ -632,7 +642,7 @@
 </connection>
 <connection>
   <ends>
-    <end task="_task_distributor_5" type="chan"/>
+    <end task="_task_distributor_6" type="chan"/>
     <end task="_task_Worker_15" type="chan"/>
   </ends>
     <index>6</index>
@@ -640,7 +650,7 @@
 </connection>
 <connection>
   <ends>
-    <end task="_task_distributor_5" type="chan"/>
+    <end task="_task_distributor_6" type="chan"/>
     <end task="_task_Worker_16" type="chan"/>
   </ends>
     <index>7</index>
@@ -648,23 +658,9 @@
 </connection>
 <connection>
   <ends>
-    <end task="_task_distributor_5" type="chan"/>
-    <end task="_task_buttonListener_6" type="chan"/>
+    <end task="_task_distributor_6" type="chan"/>
+    <end task="_task_buttonListener_7" type="chan"/>
   </ends>
   <name>c_buttons</name>
-</connection>
-<connection>
-  <ends>
-    <end task="_task_distributor_5" type="chan"/>
-    <end task="_task_pauseController_7" type="chan"/>
-  </ends>
-  <name>c_stop</name>
-</connection>
-<connection>
-  <ends>
-    <end task="_task_buttonListener_6" type="chan"/>
-    <end task="_task_pauseController_7" type="chan"/>
-  </ends>
-  <name>c_pauseLink</name>
 </connection>
 </taskgraph>

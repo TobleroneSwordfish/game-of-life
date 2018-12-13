@@ -11,18 +11,19 @@
 #define  IMHT 1024                  //image height
 #define  IMWD 1024                  //image width
 #define GENERATE 1 //should the grid be generated or read in
-#define PACKSIZE 64
+#define PACKSIZE 32
 #define ROW_LENGTH (IMWD/PACKSIZE) + (IMWD % PACKSIZE != 0)
 #define WORKERS 8
 #define MAXROUNDS 100
-#define infname "512x512.pgm"     //put your input image path here
+#define infname "64test.pgm"     //put your input image path here
 #define outfname "testout.pgm" //put your output image path here
 #define ROUNDOUT -1
-#define ALIVERATIO 0.6
+#define ROUNDINFO 100
+#define ALIVERATIO 0.1
 #define LOWRANDBOUND RAND_MAX*ALIVERATIO
 
 typedef unsigned char uchar;      //using uchar as shorthand
-typedef uint64_t packType;
+typedef uint32_t packType;
 
 on tile[0]: port p_scl = XS1_PORT_1E;         //interface ports to orientation
 on tile[0]: port p_sda = XS1_PORT_1F;
@@ -151,11 +152,13 @@ void DataInStream(chanend c_out)
 #define alive (uchar)255
 #define ded (uchar)0
 
-//TODO replace with macro or inline, not sure if inline is the same speed
-packType addBitAtIndex(packType num, unsigned int index)
-{
-    return num | ((packType)1 << index);
-}
+////TODO replace with macro or inline, not sure if inline is the same speed
+//packType ADDBIT(packType num, unsigned int index)
+//{
+//    return num | ((packType)1 << index);
+//}
+
+#define ADDBIT(x, index) ((x) | (1 << index))
 
 //takes the timer values and interval the timer is running on and returns the most accurate approximation in seconds
 double timeInSeconds(uint32_t counter, uint32_t timerValue, uint32_t interval)
@@ -192,7 +195,7 @@ void readRow(chanend c_in, packType row[ROW_LENGTH])
             //add a bit to the integer at the index
             if (!val == 0)
             {
-                num = addBitAtIndex(num, x % PACKSIZE);
+                num = ADDBIT(num, x % PACKSIZE);
             }
         }
         row[i] = num;
@@ -266,7 +269,7 @@ void generateImage(chanend wcs[WORKERS], chanend c_timer)
                   packType value=0;
                   for (int x=0; x<PACKSIZE;x++){
                       if (rand()<LOWRANDBOUND){
-                          value=addBitAtIndex(value,x);
+                          value=ADDBIT(value,x);
                       }
                   }
                   wcs[w]<: value;
@@ -284,9 +287,14 @@ void generateImage(chanend wcs[WORKERS], chanend c_timer)
 /////////////////////////////////////////////////////////////////////////////////////////
 void distributor(chanend c_in, chanend c_out, chanend c_timer, chanend wcs[WORKERS], chanend c_leds, chanend c_buttons, chanend c_pause)
 {
+
   //Starting up and wait for button press
   printf( "ProcessImage: Start, size = %dx%d\n", IMHT, IMWD );
   printf( "Waiting for SW1\n" );
+  printf ("WHAT THE ACTUAL FUCK\n");
+  for (int i; i<10; i++){
+          printf("%i\n", rand());
+      }
   int r = 0;
   while (r != 14)
   {
@@ -300,6 +308,10 @@ void distributor(chanend c_in, chanend c_out, chanend c_timer, chanend wcs[WORKE
   ///////////////////////////////////////////////////////////
   //        provide workers with initial values            //
   ///////////////////////////////////////////////////////////
+  uint32_t startReadCounter, startReadTimer;
+  c_timer <: 3;
+  c_timer :> startReadCounter;
+  c_timer :> startReadTimer;
   if (GENERATE)
   {
       generateImage(wcs, c_timer);
@@ -309,6 +321,12 @@ void distributor(chanend c_in, chanend c_out, chanend c_timer, chanend wcs[WORKE
       readImage(wcs, c_in);
   }
 
+  uint32_t endReadCounter, endReadTimer;
+  c_timer <: 3;
+  c_timer :> endReadCounter;
+  c_timer :> endReadTimer;
+
+  printf("Read/generate phase complete in %f seconds\n", timeInSeconds(endReadCounter, endReadTimer, 10000000) - timeInSeconds(startReadCounter, startReadTimer, 10000000));
   printf("Processing starting\n");
 
   c_leds <: (uchar)4;
@@ -373,6 +391,10 @@ void distributor(chanend c_in, chanend c_out, chanend c_timer, chanend wcs[WORKE
       {
           pause = 1;
       }
+      if (rounds == ROUNDINFO)
+      {
+          pause = 2;
+      }
       for (int i = 0; i < WORKERS; i++)
       {
           wcs[i] <: pause;
@@ -433,7 +455,7 @@ void distributor(chanend c_in, chanend c_out, chanend c_timer, chanend wcs[WORKE
           //wait for either board to not be tilted or button not be pressed
           while(pause != 0)
           {
-              printf("Waiting for unpause\n");
+              //printf("Waiting for unpause\n");
               c_pause <: (uchar)37;
               c_pause :> pause;
               delay_milliseconds(100); //love that this exists
@@ -448,7 +470,7 @@ void distributor(chanend c_in, chanend c_out, chanend c_timer, chanend wcs[WORKE
               c_leds <: (uchar)8;
           }
       }
-      c_leds <: (uchar)1;
+      //c_leds <: (uchar)1;
   }
 
   uint32_t endCounter, endTimer;
@@ -459,11 +481,13 @@ void distributor(chanend c_in, chanend c_out, chanend c_timer, chanend wcs[WORKE
   printf("Processing complete in time: %f\n", timeInSeconds(endCounter, endTimer, 10000000) - timeInSeconds(startCounter, startTimer, 10000000));
 }
 
-//check if cell at index is alive
-int checkAlive(int r, int i, packType rows[IMWD/WORKERS + 2][ROW_LENGTH])
-{
-    return rows[r][i / PACKSIZE] & (1 << (i % PACKSIZE));
-}
+////check if cell at index is alive
+//int CHECKALIVE(int r, int i, packType rows[IMWD/WORKERS + 2][ROW_LENGTH])
+//{
+//    return rows[r][i / PACKSIZE] & (1 << (i % PACKSIZE));
+//}
+
+#define CHECKALIVE(r, i, rows) rows[r][i / PACKSIZE] & (1 << (i % PACKSIZE))
 
 //evaluate if cell at row r, index i should be alive next round
 uchar evaluate(int r, int i, packType rows[IMWD/WORKERS + 2][ROW_LENGTH])
@@ -475,19 +499,15 @@ uchar evaluate(int r, int i, packType rows[IMWD/WORKERS + 2][ROW_LENGTH])
         //go back and forth along rows
         for (int x = -1; x < 2; x++)
         {
-            //not the current cell
-            if (!((x == 0) && (0 == y)))
+            if (CHECKALIVE(r + y, (i + x + IMWD) % IMWD, rows)) //cell is alive
             {
-                if (checkAlive(r + y, (i + x + IMWD) % IMWD, rows)) //cell is alive
-                {
-                    neighbors++;
-                }
+                neighbors++;
             }
         }
     }
-    if (checkAlive(r, i, rows))
+    if (CHECKALIVE(r, i, rows))
     {
-        if (neighbors <= 3 && neighbors >= 2) //stay alive
+        if (neighbors <= 4 && neighbors >= 3) //stay alive
         {
             return 1;
         }
@@ -502,6 +522,22 @@ uchar evaluate(int r, int i, packType rows[IMWD/WORKERS + 2][ROW_LENGTH])
     return 0;
 }
 
+int wakeUp(int value, int aliveTotal)
+{
+    if (aliveTotal>0){
+        if (value==2){
+            value=1;
+        }
+        else if (value==1){
+            value=0;
+        }
+    }
+    else {
+        value=2;
+    }
+    return value;
+}
+
 void Worker(chanend channel, int id)
 {
     packType rows[IMWD/WORKERS + 2][ROW_LENGTH];
@@ -513,6 +549,17 @@ void Worker(chanend channel, int id)
             channel :> rows[r][i];
         }
     }
+    //0 = has alive cells
+    //1 = recently become alive
+    //2 = completely dark
+    uchar dark[IMWD/WORKERS + 2][ROW_LENGTH];
+    //initialize dark array
+    for (int i=0;i<IMWD/WORKERS + 2; i++){
+        for (int j=0; j<ROW_LENGTH; j++){
+            dark[i][j]=0;
+        }
+    }
+    //printf("Finished defining dark array\n");
     //main processing ιθθρ
     //shit
     //more shjit
@@ -525,36 +572,66 @@ void Worker(chanend channel, int id)
     // "add the fucking shit"
     //okay
     //ιθθρ brother
+    packType rowBuffer[2][ROW_LENGTH];
+    uchar currentRow = 0;
     while (1)
     {
-        //initialize new array
-        packType rowsNew[IMWD/WORKERS + 2][ROW_LENGTH];
-        for (int y = 0; y < IMWD/WORKERS + 2; y++)
-        {
-            for (int x = 0; x < ROW_LENGTH; x++)
-            {
-                rowsNew[y][x] = 0;
-            }
-        }
         //each row
         for (int r = 1; r <= IMWD/WORKERS; r++)
         {
-            //each cell
-            for (int i = 0; i < IMWD; i++)
+            //printf("Evaluating row %i\n", r);
+            //each uint32_t
+            for (int n = 0; n < ROW_LENGTH; n++)
             {
-                if (evaluate(r, i, rows))
+                //printf("Evaluating int %i\n", n);
+                packType num = 0;
+                //int is not dark
+                if (dark[r][n]!=2){
+                    packType aliveCells = 0;
+                    //each cell
+                    for (int j = 0; j < PACKSIZE; j++){
+                        if (evaluate(r, j+PACKSIZE*n, rows)){
+                             num = ADDBIT(num, j % PACKSIZE);
+                             aliveCells++;
+                        }
+                    }
+                    if (aliveCells == 0){
+                        dark[r][n] = 2;
+                    }
+                    else if (dark[r][n]==1){
+                        dark[r][n]=0;
+                    }
+                }
+                if ((n==0 && (dark[r][ROW_LENGTH-1]==0 ||dark[r][1]==0 )) || (n==ROW_LENGTH-1 && (dark[r][0]==0|| dark[ROW_LENGTH-2])) || (n==0 && n!=ROW_LENGTH-1 && (dark[r-1][n] == 0 || dark[r+1][n] == 0))){
+                    dark[r][n] = 1;
+                }
+
+
+//                packType num = 0;
+//                //each cell in ints
+//                for (int i = 0; i < PACKSIZE; i++)
+//                {
+//                    if (evaluate(r, i + n * PACKSIZE, rows))
+//                    {
+//                        num = ADDBIT(num, i % PACKSIZE);
+//                    }
+//                }
+                rowBuffer[currentRow][n] = num;
+            }
+            if (r != 1) //not first row
+            {
+                //write row buffer back to rows
+                for (int i = 0; i < ROW_LENGTH; i++)
                 {
-                    rowsNew[r][i / PACKSIZE] = addBitAtIndex(rowsNew[r][i / PACKSIZE], i % PACKSIZE);
+                    rows[r - 1][i] = rowBuffer[!currentRow][i];
                 }
             }
+            currentRow = !currentRow;
         }
-        //clone array
-        for (int y = 0; y < IMWD/WORKERS + 2; y++)
+        //dump last row
+        for (int i = 0; i < ROW_LENGTH; i++)
         {
-            for (int x = 0; x < ROW_LENGTH; x++)
-            {
-                rows[y][x] = rowsNew[y][x];
-            }
+            rows[IMWD/WORKERS][i] = rowBuffer[!currentRow][i];
         }
         //send out 1st and (n-1)th rows
         for (int i = 0; i < ROW_LENGTH; i++)
@@ -566,13 +643,22 @@ void Worker(chanend channel, int id)
             channel <: rows[IMWD/WORKERS][i];
         }
         //read back 0th and nth rows
+        uint32_t aliveTotal=0;
+        uint32_t temp;
         for (int i = 0; i < ROW_LENGTH; i++)
         {
-            channel :> rows[0][i];
+            channel :> temp;
+            aliveTotal += temp;
+            rows[0][i]=temp;
+            dark[0][i] = wakeUp(dark[0][i], aliveTotal);
         }
+        aliveTotal = 0;
         for (int i = 0; i < ROW_LENGTH; i++)
         {
-            channel :> rows[IMWD/WORKERS + 1][i];
+            channel :> temp;
+            aliveTotal += temp;
+            rows[IMWD/WORKERS + 1][i]=temp;
+            dark[IMWD/WORKERS + 1][i] = wakeUp(dark[IMWD/WORKERS + 1][i], aliveTotal);
         }
         uchar pause;
         channel :> pause;
@@ -598,7 +684,7 @@ void Worker(chanend channel, int id)
                     packType x = rows[r][n];
                     for (int i = 0; i < getIntSize(n); i++)
                     {
-                        if (x % 2) //TODO - change to checkalive
+                        if (x % 2) //TODO - change to CHECKALIVE
                         {
                             count++;
                         }
@@ -733,9 +819,9 @@ void Timer(chanend c_timer)
 //{
 //    uint32_t n = 0;
 //    unsigned int index = 6;
-//    printf("bit inserted at %u = %u\n", index, n = addBitAtIndex(n, index));
+//    printf("bit inserted at %u = %u\n", index, n = ADDBIT(n, index));
 //    index = 17;
-//    printf("bit inserted at %u = %u\n", index, n = addBitAtIndex(n, index));
+//    printf("bit inserted at %u = %u\n", index, n = ADDBIT(n, index));
 //    printf("\n");
 //}
 
@@ -752,21 +838,19 @@ chan c_inIO, c_outIO, c_timer, c_leds, c_buttons, c_stop, c_pauseLink, c_accel; 
 chan workerChans[WORKERS];
 par {
     on tile[0].core[0]: Timer(c_timer); //timer thread to keep track of a sensible real world time
+    on tile[0].core[0]: pauseController(c_pauseLink, c_accel, c_stop); //distributes pause value
     on tile[0].core[0]: LEDController(c_leds); //basically just gives us toggleable LEDs, probably more trouble than is worth
     on tile[0]: i2c_master(i2c, 1, p_scl, p_sda, 10);   //server thread providing orientation data
-    on tile[0]: orientation(i2c[0], c_accel);        //client thread reading orientation data
-    on tile[0]: { //we can run these sequentially as the datainstream only needs to run once
+    on tile[1]: orientation(i2c[0], c_accel);        //client thread reading orientation data
+    on tile[1]: { //we can run these sequentially as the datainstream only needs to run once
         DataInStream(c_inIO);
         DataOutStream(c_outIO);
     }
-    on tile[0]: distributor(c_inIO, c_outIO, c_timer, workerChans, c_leds, c_buttons, c_stop);//thread to coordinate work on image
+    on tile[1]: distributor(c_inIO, c_outIO, c_timer, workerChans, c_leds, c_buttons, c_stop);//thread to coordinate work on image
     on tile[0]: buttonListener(buttons, c_buttons, c_pauseLink); //listens to buttons, vat vanderful musik zey make
-    on tile[0]: pauseController(c_pauseLink, c_accel, c_stop); //distributes pause value
-    //on tile[0]: test();
-    on tile[0]: Worker(workerChans[0], 0);
-    par (int i = 1; i < WORKERS; i++) //start workers in order, giving them IDs for debug purposes
+    par (int i = 0; i < WORKERS; i++) //start workers in order, giving them IDs for debug purposes
     {
-        on tile[1]: Worker(workerChans[i], i);
+        on tile[i % 2]: Worker(workerChans[i], i);
     }
   }
 
